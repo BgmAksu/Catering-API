@@ -21,3 +21,10 @@ $router->get('/api/tags/(\d+)',      'App\Controllers\TagController@detail');
 $router->post('/api/tags',           'App\Controllers\TagController@create');
 $router->put('/api/tags/(\d+)',      'App\Controllers\TagController@update');
 $router->delete('/api/tags/(\d+)',   'App\Controllers\TagController@delete');
+
+// Employees
+$router->get('/api/facilities/(\d+)/employees', 'App\Controllers\EmployeeController@list');
+$router->post('/api/facilities/(\d+)/employees', 'App\Controllers\EmployeeController@create');
+$router->get('/api/employees/(\d+)',            'App\Controllers\EmployeeController@detail');
+$router->put('/api/employees/(\d+)',            'App\Controllers\EmployeeController@update');
+$router->delete('/api/employees/(\d+)',         'App\Controllers\EmployeeController@delete');
