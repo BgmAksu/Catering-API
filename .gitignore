@@ -1,0 +1,38 @@
+# Composer vendor directory
+/vendor/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE/editor config files
+.idea/
+*.iml
+*.iws
+
+# PhpStorm specific
+# If you want to ignore your entire .idea folder (common for teams):
+.idea/
+
+# If you want to keep project settings but ignore workspace (user) settings, use:
+# .idea/workspace.xml
+# .idea/tasks.xml
+# .idea/dictionaries
+
+# Editor swap files
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Cache/temp
+/cache/
+tmp/
+*.tmp
+
+# PHPUnit and test coverage
+phpunit.xml
+phpunit.xml.dist
+/coverage/
+
