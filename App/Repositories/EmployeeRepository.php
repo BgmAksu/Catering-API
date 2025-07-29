@@ -10,12 +10,27 @@ class EmployeeRepository
         $this->pdo = $pdo;
     }
 
+    public function getPaginatedByFacility($facilityId, $limit, $cursor)
+    {
+        $sql = "SELECT id, name, email, phone, position FROM employees WHERE facility_id = ? AND id > ? ORDER BY id LIMIT ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$facilityId, $cursor, $limit]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public function getByFacility($facilityId)
     {
         $sql = "SELECT id, name, email, phone, position FROM employees WHERE facility_id = ?";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$facilityId]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function getById($id)
+    {
+        $stmt = $this->pdo->prepare("SELECT id, facility_id, name, email, phone, position FROM employees WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
     public function create($facilityId, $emp)
@@ -26,11 +41,30 @@ class EmployeeRepository
         $stmt->execute([
             $facilityId, $emp['name'], $emp['email'], $emp['phone'], $emp['position']
         ]);
+
+        return $this->pdo->lastInsertId();
     }
 
     public function deleteAllByFacility($facilityId)
     {
         $stmt = $this->pdo->prepare("DELETE FROM employees WHERE facility_id = ?");
         $stmt->execute([$facilityId]);
+    }
+
+    public function update($id, $emp)
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE employees SET name=?, email=?, phone=?, position=? WHERE id=?"
+        );
+        $stmt->execute([
+            $emp['name'], $emp['email'], $emp['phone'], $emp['position'], $id
+        ]);
+        return $stmt->rowCount();
+    }
+    public function delete($id)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM employees WHERE id=?");
+        $stmt->execute([$id]);
+        return $stmt->rowCount();
     }
 }
