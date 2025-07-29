@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Helper\Sanitizer;
+use App\Helper\Validator;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -28,14 +30,6 @@ class FacilityController extends Injectable
         $this->employeeRepo = new EmployeeRepository($this->pdo);
         $this->tagRepo = new TagRepository($this->pdo);
         $this->locationRepo = new LocationRepository($this->pdo);
-    }
-    /**
-     * Sanitize a string value from client input.
-     * Removes HTML tags and trims whitespace.
-     */
-    private function sanitizeString($input)
-    {
-        return trim(strip_tags((string)$input));
     }
 
     /**
@@ -68,10 +62,11 @@ class FacilityController extends Injectable
     public function search()
     {
         $filters = [
-            'name' => isset($_GET['name']) ? $this->sanitizeString($_GET['name']) : null,
-            'tag' => isset($_GET['tag']) ? $this->sanitizeString($_GET['tag']) : null,
-            'city' => isset($_GET['city']) ? $this->sanitizeString($_GET['city']) : null,
+            'name' => isset($_GET['name']) ? Sanitizer::string($_GET['name']) : null,
+            'tag' => isset($_GET['tag']) ? Sanitizer::string($_GET['tag']) : null,
+            'city' => isset($_GET['city']) ? Sanitizer::string($_GET['city']) : null,
         ];
+
         $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) && $_GET['limit'] > 0 ? (int)$_GET['limit'] : 20;
         $cursor = isset($_GET['cursor']) && is_numeric($_GET['cursor']) ? (int)$_GET['cursor'] : 0;
 
@@ -110,18 +105,18 @@ class FacilityController extends Injectable
     {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $name = $this->sanitizeString($data['name'] ?? '');
-        $location = array_map([$this, 'sanitizeString'], $data['location'] ?? []);
-        $tags = array_map([$this, 'sanitizeString'], isset($data['tags']) && is_array($data['tags']) ? $data['tags'] : []);
-        $employees = isset($data['employees']) && is_array($data['employees']) ? $data['employees'] : [];
+        $name = Sanitizer::string($data['name'] ?? '');
+        $location = Sanitizer::sanitizeAll($data['location'] ?? []);
+        $tags = Sanitizer::sanitizeAll($data['tags'] ?? []);
+        $employees = isset($data['employees']) && is_array($data['employees']) ? Sanitizer::sanitizeAll($data['employees']) : [];
 
         if (
-            empty($name) ||
-            empty($location['city']) ||
-            empty($location['address']) ||
-            empty($location['zip_code']) ||
-            empty($location['country_code']) ||
-            empty($location['phone_number'])
+            !Validator::notEmpty($name) ||
+            !Validator::notEmpty($location['city'] ?? '') ||
+            !Validator::notEmpty($location['address'] ?? '') ||
+            !Validator::zipCode($location['zip_code'] ?? '') ||
+            !Validator::countryCode($location['country_code'] ?? '') ||
+            !Validator::phone($location['phone_number'] ?? '')
         ) {
             throw new BadRequest(['error' => 'Invalid input']);
         }
@@ -136,8 +131,12 @@ class FacilityController extends Injectable
         }
 
         foreach ($employees as $emp) {
-            $emp = array_map([$this, 'sanitizeString'], $emp);
-            if ($emp['name'] && $emp['email'] && $emp['phone'] && $emp['position']) {
+            if (
+                Validator::notEmpty($emp['name'] ?? '') &&
+                Validator::email($emp['email'] ?? '') &&
+                Validator::phone($emp['phone'] ?? '') &&
+                Validator::notEmpty($emp['position'] ?? '')
+            ) {
                 $this->employeeRepo->create($facilityId, $emp);
             }
         }
@@ -152,10 +151,22 @@ class FacilityController extends Injectable
     {
         $data = json_decode(file_get_contents('php://input'), true);
 
-        $name = $this->sanitizeString($data['name'] ?? '');
-        $location = array_map([$this, 'sanitizeString'], $data['location'] ?? []);
-        $tags = array_map([$this, 'sanitizeString'], isset($data['tags']) && is_array($data['tags']) ? $data['tags'] : []);
-        $employees = isset($data['employees']) && is_array($data['employees']) ? $data['employees'] : [];
+        $name = Sanitizer::string($data['name'] ?? '');
+        $location = Sanitizer::sanitizeAll($data['location'] ?? []);
+        $tags = Sanitizer::sanitizeAll($data['tags'] ?? []);
+        $employees = isset($data['employees']) && is_array($data['employees']) ? Sanitizer::sanitizeAll($data['employees']) : [];
+
+        if (
+            !Validator::notEmpty($name) ||
+            !Validator::notEmpty($location['city'] ?? '') ||
+            !Validator::notEmpty($location['address'] ?? '') ||
+            !Validator::zipCode($location['zip_code'] ?? '') ||
+            !Validator::countryCode($location['country_code'] ?? '') ||
+            !Validator::phone($location['phone_number'] ?? '')
+        ) {
+            throw new BadRequest(['error' => 'Invalid input']);
+        }
+
 
         // Find existing facility and its location
         $facility = $this->facilityRepo->getById($id);
@@ -180,8 +191,12 @@ class FacilityController extends Injectable
 
         $this->employeeRepo->deleteAllByFacility($id);
         foreach ($employees as $emp) {
-            $emp = array_map([$this, 'sanitizeString'], $emp);
-            if ($emp['name'] && $emp['email'] && $emp['phone'] && $emp['position']) {
+            if (
+                Validator::notEmpty($emp['name'] ?? '') &&
+                Validator::email($emp['email'] ?? '') &&
+                Validator::phone($emp['phone'] ?? '') &&
+                Validator::notEmpty($emp['position'] ?? '')
+            ) {
                 $this->employeeRepo->create($id, $emp);
             }
         }
