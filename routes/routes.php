@@ -24,7 +24,15 @@ $router->delete('/api/tags/(\d+)',   'App\Controllers\TagController@delete');
 
 // Employees
 $router->get('/api/facilities/(\d+)/employees', 'App\Controllers\EmployeeController@list');
-$router->post('/api/facilities/(\d+)/employees', 'App\Controllers\EmployeeController@create');
 $router->get('/api/employees/(\d+)',            'App\Controllers\EmployeeController@detail');
+$router->post('/api/facilities/(\d+)/employees', 'App\Controllers\EmployeeController@create');
 $router->put('/api/employees/(\d+)',            'App\Controllers\EmployeeController@update');
 $router->delete('/api/employees/(\d+)',         'App\Controllers\EmployeeController@delete');
+
+// Locations
+$router->get('/api/locations',            'App\Controllers\LocationController@list');
+$router->get('/api/locations/(\d+)',      'App\Controllers\LocationController@detail');
+$router->post('/api/locations',           'App\Controllers\LocationController@create');
+$router->put('/api/locations/(\d+)',      'App\Controllers\LocationController@update');
+$router->delete('/api/locations/(\d+)',   'App\Controllers\LocationController@delete');
+

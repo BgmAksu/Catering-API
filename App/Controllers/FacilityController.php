@@ -182,6 +182,7 @@ class FacilityController extends Injectable
         $this->locationRepo->update($locationId, $location);
         $this->facilityRepo->update($id, $name);
 
+        // These parts (tag and employee) can be changed
         $this->tagRepo->deleteFacilityTags($id);
         foreach ($tags as $tagName) {
             if ($tagName === '') continue;
@@ -205,7 +206,7 @@ class FacilityController extends Injectable
     }
 
     /**
-     * Delete a facility (CASCADE deletes tags and employees).
+     * Delete a facility.
      */
     public function delete($id)
     {
