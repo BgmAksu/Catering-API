@@ -1,0 +1,151 @@
+<?php
+
+namespace tests;
+
+use PDO;
+use PDOException;
+use PHPUnit\Framework\TestCase;
+use App\Repositories\TagRepository;
+
+class TagRepositoryTest extends TestCase
+{
+    protected $pdo;
+    protected $repo;
+    protected $facilityId = 1; // Make sure this facility exists in test DB
+    protected function setUp(): void
+    {
+        $this->pdo = new PDO('mysql:host=localhost;dbname=testdb', 'root', '');
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->repo = new TagRepository($this->pdo);
+    }
+
+    public function testCreateTagIfNotExistsSuccessfully()
+    {
+        // Create a new tag
+        $name = 'unitTestTag_' . uniqid();
+
+        // First Creation
+        $id1 = $this->repo->createIfNotExists($name);
+        $this->assertIsNumeric($id1);
+
+        // Second Creation for checking uniqueness
+        $id2 = $this->repo->createIfNotExists($name);
+        $this->assertFalse($id2);
+
+        // Find id by name
+        $foundId = $this->repo->findIdByName($name);
+        $this->assertEquals($id1, $foundId);
+    }
+
+    public function testUpdateTagIfNameUniqueReturnsSuccessfully()
+    {
+        // Create tag
+        $name = 'unitUpdateTag_' . uniqid();
+        $newName = $name . '_updated';
+
+        $id = $this->repo->createIfNotExists($name);
+        $this->assertIsNumeric($id);
+
+        // Update tag name with new unique one
+        $updated = $this->repo->updateIfNameUnique($id, $newName);
+        $this->assertGreaterThan(0, $updated);
+
+        // Should be found by new name with same id
+        $foundId = $this->repo->findIdByName($newName);
+        $this->assertEquals($id, $foundId);
+    }
+
+    public function testUpdateTagNameDuplicateFails()
+    {
+        // Create tags
+        $name1 = 'unitTagDup1_' . uniqid();
+        $name2 = 'unitTagDup2_' . uniqid();
+
+        $id1 = $this->repo->createIfNotExists($name1);
+        $id2 = $this->repo->createIfNotExists($name2);
+        $this->assertIsNumeric($id1);
+        $this->assertIsNumeric($id2);
+
+        // Try to update second tag's name to first one's name (should be failed)
+        $updated = $this->repo->updateIfNameUnique($id2, $name1);
+        $this->assertFalse($updated);
+
+        // Both tags should still be found by their original names and ids
+        $this->assertEquals($id1, $this->repo->findIdByName($name1));
+        $this->assertEquals($id2, $this->repo->findIdByName($name2));
+    }
+
+    public function testDelete()
+    {
+        // Create tag
+        $name = 'unitDeleteTag_' . uniqid();
+        $id = $this->repo->createIfNotExists($name);
+
+        // Delete tag
+        $deleted = $this->repo->delete($id);
+        $this->assertGreaterThan(0, $deleted);
+
+        // Verify deletion
+        $fetched = $this->repo->getById($id);
+        $this->assertFalse($fetched);
+    }
+
+    public function testAddAndRemoveTagToFacility()
+    {
+        // Create tag
+        $tagName = 'unitFacilityTag_' . uniqid();
+        $tagId = $this->repo->createIfNotExists($tagName);
+
+        // Ensure tag is not attached to facility yet
+        $hasTag = $this->repo->facilityHasTag($this->facilityId, $tagId);
+        $this->assertFalse($hasTag, "Tag should not be attached yet.");
+
+        // Add tag to facility
+        $rowsAdded = $this->repo->addTagToFacility($this->facilityId, $tagId);
+        $this->assertEquals(1, $rowsAdded, "Tag should be added to facility.");
+
+        // Now facility has that tag
+        $hasTag = $this->repo->facilityHasTag($this->facilityId, $tagId);
+        $this->assertTrue($hasTag, "Now facility has tag.");
+
+        // Try adding again, should not add duplicate
+        $this->expectException(PDOException::class);
+        $rowsAddedAgain = $this->repo->addTagToFacility($this->facilityId, $tagId);
+        $this->assertEquals(0, $rowsAddedAgain, "No duplicate tag addition to facility.");
+
+        // Remove tag from facility
+        $rowsRemoved = $this->repo->removeTagFromFacility($this->facilityId, $tagId);
+        $this->assertEquals(1, $rowsRemoved, "Tag should be removed from facility.");
+
+        // Now facility has not that tag
+        $hasTag = $this->repo->facilityHasTag($this->facilityId, $tagId);
+        $this->assertFalse($hasTag, "Now facility has not that tag.");
+
+        // Remove again, should not affect any row
+        $rowsRemovedAgain = $this->repo->removeTagFromFacility($this->facilityId, $tagId);
+        $this->assertEquals(0, $rowsRemovedAgain, "Removing nonexistent tag from facility.");
+    }
+
+    public function testGetPaginatedReturnsCorrectTags()
+    {
+        // Insert 3 tags to test pagination (names are unique)
+        $name1 = 'unitPaginateTag1_' . uniqid();
+        $name2 = 'unitPaginateTag2_' . uniqid();
+        $name3 = 'unitPaginateTag3_' . uniqid();
+
+        $id1 = $this->repo->createIfNotExists($name1);
+        $id2 = $this->repo->createIfNotExists($name2);
+        $id3 = $this->repo->createIfNotExists($name3);
+
+        // Test: Get paginated tags (limit 2)
+        $result = $this->repo->getPaginated(2, $id1 - 1);
+        $this->assertIsArray($result);
+        $this->assertGreaterThanOrEqual(2, count($result));
+
+        // Check test tags are included in results
+        $ids = array_map('intval', array_column($result, 'id'));
+        printf("id1=%s, id2=%s, ids array: %s\n", $id1, $id2, print_r($ids, true));
+        $this->assertContains((int)$id1, $ids);
+        $this->assertContains((int)$id2, $ids);
+    }
+}

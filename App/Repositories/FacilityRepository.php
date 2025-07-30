@@ -136,7 +136,7 @@ class FacilityRepository
                 $facility['tags'][] = $row['tag_name'];
             }
         }
-        return $facility;
+        return $facility ?: [];
     }
 
     public function getLocationId($facilityId)

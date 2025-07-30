@@ -34,5 +34,6 @@ tmp/
 # PHPUnit and test coverage
 phpunit.xml
 phpunit.xml.dist
+.phpunit.result.cache
 /coverage/
 

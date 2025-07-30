@@ -14,7 +14,10 @@ class EmployeeRepository
     {
         $sql = "SELECT id, name, email, phone, position FROM employees WHERE facility_id = ? AND id > ? ORDER BY id LIMIT ?";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$facilityId, $cursor, $limit]);
+        $stmt->bindValue(1, $facilityId, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $cursor, \PDO::PARAM_INT);
+        $stmt->bindValue(3, $limit, \PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

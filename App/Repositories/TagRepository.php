@@ -10,27 +10,13 @@ class TagRepository
         $this->pdo = $pdo;
     }
 
-    public function createIfNotExists($tagName)
-    {
-        $id = $this->findIdByName($tagName);
-        if ($id) {
-            return $id;
-        }
-        return $this->create($tagName);
-    }
-
-    public function addTagToFacility($facilityId, $tagId)
-    {
-        $stmt = $this->pdo->prepare("INSERT INTO facility_tags (facility_id, tag_id) VALUES (?, ?)");
-        $stmt->execute([$facilityId, $tagId]);
-        return $stmt->rowCount();
-    }
-
     public function getPaginated($limit, $cursor)
     {
         $sql = "SELECT id, name FROM tags WHERE id > ? ORDER BY id LIMIT ?";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$cursor, $limit]);
+        $stmt->bindValue(1, $cursor, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -48,11 +34,27 @@ class TagRepository
         return $this->pdo->lastInsertId();
     }
 
+    public function createIfNotExists($tagName)
+    {
+        if ($this->existsByName($tagName)) {
+            return false;
+        }
+        return $this->create($tagName);
+    }
+
     public function update($id, $name)
     {
         $stmt = $this->pdo->prepare("UPDATE tags SET name = ? WHERE id = ?");
         $stmt->execute([$name, $id]);
         return $stmt->rowCount();
+    }
+
+    public function updateIfNameUnique($id, $name)
+    {
+        if ($this->existsByName($name)) {
+            return false;
+        }
+        return $this->update($id, $name);
     }
 
     public function delete($id)
@@ -62,15 +64,10 @@ class TagRepository
         return $stmt->rowCount();
     }
 
-    public function existsByName($name, $excludeId = null): bool
+    public function existsByName($name): bool
     {
-        if ($excludeId !== null) {
-            $stmt = $this->pdo->prepare("SELECT 1 FROM tags WHERE name = ? AND id != ?");
-            $stmt->execute([$name, $excludeId]);
-        } else {
-            $stmt = $this->pdo->prepare("SELECT 1 FROM tags WHERE name = ?");
-            $stmt->execute([$name]);
-        }
+        $stmt = $this->pdo->prepare("SELECT 1 FROM tags WHERE name = ?");
+        $stmt->execute([$name]);
         return (bool)$stmt->fetchColumn();
     }
     public function findIdByName($name)
@@ -87,7 +84,15 @@ class TagRepository
         return (bool)$stmt->fetchColumn();
     }
 
-    public function removeFacilityTag($facilityId, $tagId)
+    public function addTagToFacility($facilityId, $tagId)
+    {
+        $stmt = $this->pdo->prepare("INSERT INTO facility_tags (facility_id, tag_id) VALUES (?, ?)");
+        $stmt->execute([$facilityId, $tagId]);
+        return $stmt->rowCount();
+    }
+
+
+    public function removeTagFromFacility($facilityId, $tagId)
     {
         $stmt = $this->pdo->prepare("DELETE FROM facility_tags WHERE facility_id=? AND tag_id=?");
         $stmt->execute([$facilityId, $tagId]);

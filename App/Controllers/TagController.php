@@ -78,12 +78,12 @@ class TagController extends Injectable
         if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Tag name is required']);
         }
-        if ($this->tagRepo->existsByName($dto->name)) {
+
+        $created = $this->tagRepo->createIfNotExists($dto->name);
+        if ($created === false) {
             throw new BadRequest(['error' => 'Tag name must be unique']);
         }
-
-        $id = $this->tagRepo->create($dto->name);
-        (new Created(['id' => $id]))->send();
+        (new Created(['id' => $created]))->send();
     }
 
     /**
@@ -106,10 +106,10 @@ class TagController extends Injectable
         if (!$this->tagRepo->getById($id)) {
             throw new NotFound(['error' => 'Tag not found']);
         }
-        if ($this->tagRepo->existsByName($dto->name, $id)) {
+        $updated = $this->tagRepo->updateIfNameUnique($id, $dto->name);
+        if ($updated === false) {
             throw new BadRequest(['error' => 'Tag name must be unique']);
         }
-        $this->tagRepo->update($id, $dto->name);
         (new Ok(['message' => 'Tag updated']))->send();
     }
 

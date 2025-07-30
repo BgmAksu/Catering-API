@@ -245,7 +245,7 @@ class FacilityController extends Injectable
             if ($tagDTO->isValid()) {
                 $tagId = $this->tagRepo->findIdByName($tagDTO->name);
                 if ($tagId && $this->tagRepo->facilityHasTag($facilityId, $tagId)) {
-                    $this->tagRepo->removeFacilityTag($facilityId, $tagId);
+                    $this->tagRepo->removeTagFromFacility($facilityId, $tagId);
                     $removed[] = $tagDTO->name;
                 }
             }

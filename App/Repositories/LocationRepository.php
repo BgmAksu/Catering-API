@@ -45,7 +45,9 @@ class LocationRepository
     {
         $sql = "SELECT id, city, address, zip_code, country_code, phone_number FROM locations WHERE id > ? ORDER BY id LIMIT ?";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$cursor, $limit]);
+        $stmt->bindValue(1, $cursor, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
