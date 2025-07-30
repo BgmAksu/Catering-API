@@ -45,12 +45,6 @@ class EmployeeRepository
         return $this->pdo->lastInsertId();
     }
 
-    public function deleteAllByFacility($facilityId)
-    {
-        $stmt = $this->pdo->prepare("DELETE FROM employees WHERE facility_id = ?");
-        $stmt->execute([$facilityId]);
-    }
-
     public function update($id, $emp)
     {
         $stmt = $this->pdo->prepare(

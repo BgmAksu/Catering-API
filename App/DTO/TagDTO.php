@@ -6,14 +6,14 @@ use App\Helper\Validator;
 
 class TagDTO
 {
-    public $name;
+    public string $name;
 
     public function __construct($name)
     {
         $this->name = Sanitizer::string($name);
     }
 
-    public function isValid()
+    public function isValid(): bool
     {
         return Validator::notEmpty($this->name);
     }

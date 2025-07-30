@@ -8,9 +8,9 @@ use App\DTO\EmployeeDTO;
 
 class FacilityDTO
 {
-    public $name;
-    public $location = [];
-    public $tags = [];
+    public string $name;
+    public array $location = [];
+    public array $tags = [];
 
     public function __construct(array $data)
     {
@@ -18,7 +18,7 @@ class FacilityDTO
         $this->location = Sanitizer::sanitizeAll($data['location'] ?? []);
     }
 
-    public function isValid()
+    public function isValid(): bool
     {
         return
             Validator::notEmpty($this->name) &&

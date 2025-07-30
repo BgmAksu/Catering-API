@@ -15,7 +15,13 @@ use App\Repositories\TagRepository;
 class TagController extends Injectable
 {
     protected $pdo;
-    protected $tagRepo;
+    protected TagRepository $tagRepo;
+
+    /**
+     * @var mixed|void
+     */
+    private $db;
+
     public function __construct()
     {
         $this->pdo = $this->db->getConnection();
@@ -23,10 +29,11 @@ class TagController extends Injectable
     }
 
     /**
-     * List all tags (with optional pagination, cursor-based).
-     * Usage: /api/tags?limit=20&cursor=0
+     * List all tags with cursor-based pagination.
+     * GET /api/tags?limit=20&cursor=0
+     * @return void
      */
-    public function list()
+    public function list(): void
     {
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
@@ -45,8 +52,12 @@ class TagController extends Injectable
 
     /**
      * Get details of a single tag by ID.
+     * GET /api/tags/{tag_id}
+     * @param $id
+     * @return void
+     * @throws NotFound
      */
-    public function detail($id)
+    public function detail($id): void
     {
         $tag = $this->tagRepo->getById($id);
         if (!$tag) {
@@ -57,9 +68,12 @@ class TagController extends Injectable
 
     /**
      * Create a new tag.
+     * POST /api/tags
      * Body: { "name": "Gluten Free" }
+     * @return void
+     * @throws BadRequest
      */
-    public function create()
+    public function create(): void
     {
         $data = Request::getJsonData();
         $dto = new TagDTO($data);
@@ -77,9 +91,14 @@ class TagController extends Injectable
 
     /**
      * Update a tag's name by ID.
+     * PUT /api/tags/{tag_id}
      * Body: { "name": "New Name" }
+     * @param $id
+     * @return void
+     * @throws BadRequest
+     * @throws NotFound
      */
-    public function update($id)
+    public function update($id): void
     {
         $data = Request::getJsonData();
         $dto = new TagDTO($data);
@@ -99,8 +118,12 @@ class TagController extends Injectable
 
     /**
      * Delete a tag by ID.
+     * DELETE /api/tags/{tag_id}
+     * @param $id
+     * @return void
+     * @throws NotFound
      */
-    public function delete($id)
+    public function delete($id): void
     {
         $deleted = $this->tagRepo->delete($id);
         if (!$deleted) {

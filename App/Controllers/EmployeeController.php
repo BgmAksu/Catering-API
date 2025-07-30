@@ -15,16 +15,25 @@ use App\Repositories\EmployeeRepository;
 class EmployeeController extends Injectable
 {
     protected $pdo;
-    protected $employeeRepo;
+    protected EmployeeRepository $employeeRepo;
+    /**
+     * @var mixed|void
+     */
+    private $db;
+
     public function __construct()
     {
         $this->pdo = $this->db->getConnection();
         $this->employeeRepo = new EmployeeRepository($this->pdo);
     }
 
-    // List all employees for a facility with cursor-based pagination
-    // Usage: /api/facilities/{fid}/employees?limit=10&cursor=0
-    public function list($facilityId)
+    /**
+     * List all employees for a facility with cursor-based pagination.
+     * GET /api/facilities/{facility_id}/employees?limit=20&cursor=0
+     * @param $facilityId
+     * @return void
+     */
+    public function list($facilityId): void
     {
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
@@ -41,8 +50,14 @@ class EmployeeController extends Injectable
         ]))->send();
     }
 
-    // Get single employee detail
-    public function detail($id)
+    /**
+     * Get a single employee by ID.
+     * GET /api/employees/{employee_id}
+     * @param $id
+     * @return void
+     * @throws NotFound
+     */
+    public function detail($id): void
     {
         $employee = $this->employeeRepo->getById($id);
         if (!$employee) {
@@ -51,8 +66,15 @@ class EmployeeController extends Injectable
         (new Ok($employee))->send();
     }
 
-    // Add new employee to a facility
-    public function create($facilityId)
+    /**
+     * Create a new employee for a facility
+     * POST /api/facilities/{facility_id}/employees
+     * Body: { "name": "...", "email": "...", "phone": "...", "position": "..." }
+     * @param $facilityId
+     * @return void
+     * @throws BadRequest
+     */
+    public function create($facilityId): void
     {
         $data = Request::getJsonData();
         $dto = new EmployeeDTO($data);
@@ -65,8 +87,16 @@ class EmployeeController extends Injectable
         (new Created(['id' => $id]))->send();
     }
 
-    // Update an employee
-    public function update($employeeId)
+    /**
+     * Update an employee by ID.
+     * PUT /api/employees/{employee_id}
+     * Body: { "name": "...", "email": "...", "phone": "...", "position": "..." }
+     * @param $employeeId
+     * @return void
+     * @throws BadRequest
+     * @throws NotFound
+     */
+    public function update($employeeId): void
     {
         $data = Request::getJsonData();
         $dto = new EmployeeDTO($data);
@@ -83,8 +113,14 @@ class EmployeeController extends Injectable
         (new Ok(['message' => 'Employee updated']))->send();
     }
 
-    // Delete an employee
-    public function delete($employeeId)
+    /**
+     * Delete an employee by ID.
+     * DELETE /api/employees/{employee_id}
+     * @param $employeeId
+     * @return void
+     * @throws NotFound
+     */
+    public function delete($employeeId): void
     {
         $deleted = $this->employeeRepo->delete($employeeId);
         if (!$deleted) {

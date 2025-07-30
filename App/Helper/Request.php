@@ -4,7 +4,7 @@ namespace App\Helper;
 
 class Request
 {
-    public static function cursorDecider()
+    public static function cursorDecider(): int
     {
         return isset($_GET['cursor']) && is_numeric($_GET['cursor']) ? (int)$_GET['cursor'] : 0;
     }

@@ -7,7 +7,7 @@ class Validator
     /**
      * Validate if string is not empty
      */
-    public static function notEmpty($input)
+    public static function notEmpty($input): bool
     {
         return strlen(trim($input)) > 0;
     }
@@ -15,7 +15,7 @@ class Validator
     /**
      * Validate email address
      */
-    public static function email($input)
+    public static function email($input): bool
     {
         return filter_var($input, FILTER_VALIDATE_EMAIL) !== false;
     }
@@ -24,7 +24,7 @@ class Validator
      * Validate phone number: basic, at least 8 digits
      * Can be made for only NL number structure
      */
-    public static function phone($input)
+    public static function phone($input): false|int
     {
         return preg_match('/^\+?\d{8,15}$/', $input);
     }
@@ -33,7 +33,7 @@ class Validator
      * Validate country code: 2 uppercase letters
      * Can be made for only 'NL'
      */
-    public static function countryCode($input)
+    public static function countryCode($input): false|int
     {
         return preg_match('/^[A-Z]{2}$/', $input);
     }
@@ -42,7 +42,7 @@ class Validator
      * Validate zip code: non-empty
      * Can be made for only NL city codes
      */
-    public static function zipCode($input)
+    public static function zipCode($input): bool
     {
         return strlen(trim($input)) > 0;
     }

@@ -6,11 +6,11 @@ use App\Helper\Validator;
 
 class LocationDTO
 {
-    public $city;
-    public $address;
-    public $zip_code;
-    public $country_code;
-    public $phone_number;
+    public string $city;
+    public string $address;
+    public string $zip_code;
+    public string $country_code;
+    public string|array|null $phone_number;
 
     public function __construct(array $data)
     {
@@ -21,7 +21,7 @@ class LocationDTO
         $this->phone_number = Sanitizer::phone($data['phone_number'] ?? '');
     }
 
-    public function isValid()
+    public function isValid(): bool
     {
         return
             Validator::notEmpty($this->city) &&
@@ -31,7 +31,7 @@ class LocationDTO
             Validator::phone($this->phone_number);
     }
 
-    public function asArray()
+    public function asArray(): array
     {
         return [
             'city' => $this->city,

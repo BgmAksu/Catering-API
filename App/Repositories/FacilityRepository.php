@@ -9,7 +9,7 @@ class FacilityRepository
     {
         $this->pdo = $pdo;
     }
-    public function getPaginated($limit, $cursor, $filters = [])
+    public function getPaginated($limit, $cursor, $filters = []): array
     {
         // Build WHERE clause for filters (name, tag, city)
         $where = " WHERE f.id > :cursor";
@@ -95,7 +95,7 @@ class FacilityRepository
         return [$facilities, $maxId];
     }
 
-    public function getById($id)
+    public function getById($id): array
     {
         $sql = "
             SELECT 
@@ -157,6 +157,7 @@ class FacilityRepository
     {
         $stmt = $this->pdo->prepare("UPDATE facilities SET name=? WHERE id=?");
         $stmt->execute([$name, $id]);
+        return $stmt->rowCount();
     }
 
     public function delete($id)

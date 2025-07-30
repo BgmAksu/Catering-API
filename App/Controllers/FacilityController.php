@@ -24,6 +24,10 @@ class FacilityController extends Injectable
     protected EmployeeRepository $employeeRepo;
     protected TagRepository $tagRepo;
     protected LocationRepository $locationRepo;
+    /**
+     * @var mixed|void
+     */
+    private $db;
 
     public function __construct()
     {
@@ -90,6 +94,7 @@ class FacilityController extends Injectable
 
     /**
      * Get detail of a facility with location, tags, and employees.
+     * GET /api/facilities/{facility_id}
      * @param $id
      * @return void
      * @throws NotFound
@@ -107,6 +112,9 @@ class FacilityController extends Injectable
 
     /**
      * Create a new facility.
+     * POST /api/facilities
+     * Body: { "name": "...", "location": {...}, "tags": [...] }
+     * @return void
      * @throws BadRequest
      */
     public function create(): void
@@ -131,7 +139,9 @@ class FacilityController extends Injectable
     }
 
     /**
-     * Update a facility.
+     * Update a facility by ID.
+     * PUT /api/facilities/{facility_id}
+     * Body: { "name": "...", "location": {...} }
      * @param $id
      * @return void
      * @throws BadRequest
@@ -164,7 +174,8 @@ class FacilityController extends Injectable
     }
 
     /**
-     * Delete a facility.
+     * Delete a facility by ID.
+     * DELETE /api/facilities/{facility_id}
      * @param $id
      * @return void
      * @throws NotFound
@@ -180,6 +191,8 @@ class FacilityController extends Injectable
 
     /**
      * Add tag(s) to facility.
+     * POST /api/facilities/{facility_id}/tags
+     * Body: [ "vegan", "halal" ]
      * @param $facilityId
      * @return void
      * @throws NotFound
@@ -211,7 +224,9 @@ class FacilityController extends Injectable
     }
 
     /**
-     * Remove tag(s) from facility
+     * Remove tag(s) from facility.
+     * DELETE /api/facilities/{facility_id}/tags
+     * Body: [ "meat" ]
      * @param $facilityId
      * @return void
      * @throws NotFound

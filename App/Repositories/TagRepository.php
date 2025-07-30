@@ -19,10 +19,11 @@ class TagRepository
         return $this->create($tagName);
     }
 
-    public function addTagToFacility($facilityId, $tagId): void
+    public function addTagToFacility($facilityId, $tagId)
     {
         $stmt = $this->pdo->prepare("INSERT INTO facility_tags (facility_id, tag_id) VALUES (?, ?)");
         $stmt->execute([$facilityId, $tagId]);
+        return $stmt->rowCount();
     }
 
     public function getPaginated($limit, $cursor)
@@ -47,10 +48,11 @@ class TagRepository
         return $this->pdo->lastInsertId();
     }
 
-    public function update($id, $name): void
+    public function update($id, $name)
     {
         $stmt = $this->pdo->prepare("UPDATE tags SET name = ? WHERE id = ?");
         $stmt->execute([$name, $id]);
+        return $stmt->rowCount();
     }
 
     public function delete($id)

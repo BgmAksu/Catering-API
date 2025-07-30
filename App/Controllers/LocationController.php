@@ -15,7 +15,12 @@ use App\Repositories\LocationRepository;
 class LocationController extends Injectable
 {
     protected $pdo;
-    protected $locationRepo;
+    protected LocationRepository $locationRepo;
+    /**
+     * @var mixed|void
+     */
+    private $db;
+
     public function __construct()
     {
         $this->pdo = $this->db->getConnection();
@@ -23,10 +28,11 @@ class LocationController extends Injectable
     }
 
     /**
-     * List locations with cursor-based pagination.
+     * List all locations with cursor-based pagination.
      * GET /api/locations?limit=20&cursor=0
+     * @return void
      */
-    public function list()
+    public function list(): void
     {
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
@@ -44,9 +50,13 @@ class LocationController extends Injectable
     }
 
     /**
-     * Get a single location detail by id.
+     * Get a single location detail by ID.
+     * GET /api/locations/{location_id}
+     * @param $id
+     * @return void
+     * @throws NotFound
      */
-    public function detail($id)
+    public function detail($id): void
     {
         $location = $this->locationRepo->getById($id);
         if (!$location) {
@@ -58,8 +68,11 @@ class LocationController extends Injectable
     /**
      * Create a new location.
      * POST /api/locations
+     * Body: { "city": "...", "address": "...", "zip_code": "...", "country_code": "...", "phone_number": "..." }
+     * @return void
+     * @throws BadRequest
      */
-    public function create()
+    public function create(): void
     {
         $data = Request::getJsonData();
         $dto = new LocationDTO($data);
@@ -73,10 +86,15 @@ class LocationController extends Injectable
     }
 
     /**
-     * Update a location by id.
-     * PUT /api/locations/{id}
+     * Update a location by ID.
+     * PUT /api/locations/{location_id}
+     * Body: { "city": "...", "address": "...", "zip_code": "...", "country_code": "...", "phone_number": "..." }
+     * @param $id
+     * @return void
+     * @throws BadRequest
+     * @throws NotFound
      */
-    public function update($id)
+    public function update($id): void
     {
         $data = Request::getJsonData();
         $dto = new LocationDTO($data);
@@ -94,9 +112,13 @@ class LocationController extends Injectable
     }
 
     /**
-     * Delete a location by id.
+     * Delete a location by ID.
+     * DELETE /api/locations/{location_id}
+     * @param $id
+     * @return void
+     * @throws NotFound
      */
-    public function delete($id)
+    public function delete($id): void
     {
         $deleted = $this->locationRepo->delete($id);
         if (!$deleted) {

@@ -7,10 +7,10 @@ use App\Helper\Validator;
 
 class EmployeeDTO
 {
-    public $name;
-    public $email;
-    public $phone;
-    public $position;
+    public string $name;
+    public string $email;
+    public string|array|null $phone;
+    public string $position;
 
     public function __construct(array $data)
     {
@@ -20,7 +20,7 @@ class EmployeeDTO
         $this->position = Sanitizer::string($data['position'] ?? '');
     }
 
-    public function isValid()
+    public function isValid(): bool
     {
         return
             Validator::notEmpty($this->name) &&
@@ -29,7 +29,7 @@ class EmployeeDTO
             Validator::notEmpty($this->position);
     }
 
-    public function asArray()
+    public function asArray(): array
     {
         return [
             'name' => $this->name,
