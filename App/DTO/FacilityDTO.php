@@ -16,7 +16,6 @@ class FacilityDTO
     {
         $this->name = Sanitizer::string($data['name'] ?? '');
         $this->location = Sanitizer::sanitizeAll($data['location'] ?? []);
-        $this->tags = Sanitizer::sanitizeAll($data['tags'] ?? []);
     }
 
     public function isValid()

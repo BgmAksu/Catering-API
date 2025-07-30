@@ -36,3 +36,7 @@ $router->post('/api/locations',           'App\Controllers\LocationController@cr
 $router->put('/api/locations/(\d+)',      'App\Controllers\LocationController@update');
 $router->delete('/api/locations/(\d+)',   'App\Controllers\LocationController@delete');
 
+// Add or Remove tag from a Facility
+$router->post('/api/facilities/(\d+)/tags', 'App\Controllers\FacilityController@addTags');
+$router->delete('/api/facilities/(\d+)/tags', 'App\Controllers\FacilityController@removeTags');
+

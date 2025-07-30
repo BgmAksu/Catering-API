@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\DTO\FacilityDTO;
+use App\DTO\TagDTO;
 use App\Helper\Request;
 use App\Helper\Sanitizer;
 use App\Plugins\Di\Injectable;
@@ -19,10 +20,10 @@ use App\Repositories\LocationRepository;
 class FacilityController extends Injectable
 {
     protected $pdo;
-    protected $facilityRepo;
-    protected $employeeRepo;
-    protected $tagRepo;
-    protected $locationRepo;
+    protected FacilityRepository $facilityRepo;
+    protected EmployeeRepository $employeeRepo;
+    protected TagRepository $tagRepo;
+    protected LocationRepository $locationRepo;
 
     public function __construct()
     {
@@ -36,13 +37,14 @@ class FacilityController extends Injectable
     /**
      * List all facilities with cursor-based pagination, including location, tags, and employees.
      * GET /api/facilities?limit=10&cursor=0
+     * @return void
      */
-    public function list()
+    public function list(): void
     {
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        list($facilities, $ids, $maxId) = $this->facilityRepo->getPaginated($limit, $cursor);
+        list($facilities, $maxId) = $this->facilityRepo->getPaginated($limit, $cursor);
         foreach ($facilities as $fid => &$fac) {
             $fac['employees'] = $this->employeeRepo->getByFacility($fid);
         }
@@ -59,8 +61,9 @@ class FacilityController extends Injectable
     /**
      * Search facilities with cursor-based pagination.
      * GET /api/facilities/search?name=...&tag=...&city=...&limit=10&cursor=0
+     * @return void
      */
-    public function search()
+    public function search(): void
     {
         $filters = [
             'name' => isset($_GET['name']) ? Sanitizer::string($_GET['name']) : null,
@@ -71,7 +74,7 @@ class FacilityController extends Injectable
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        list($facilities, $ids, $maxId) = $this->facilityRepo->getPaginated($limit, $cursor, $filters);
+        list($facilities, $maxId) = $this->facilityRepo->getPaginated($limit, $cursor, $filters);
         foreach ($facilities as $fid => &$fac) {
             $fac['employees'] = $this->employeeRepo->getByFacility($fid);
         }
@@ -87,22 +90,26 @@ class FacilityController extends Injectable
 
     /**
      * Get detail of a facility with location, tags, and employees.
+     * @param $id
+     * @return void
+     * @throws NotFound
      */
-    public function detail($id)
+    public function detail($id): void
     {
         $facility = $this->facilityRepo->getById($id);
         if (!$facility) {
             throw new NotFound(['error' => 'Facility not found']);
         }
-        $facility['employees'] = $this->facilityRepo->getByFacility($id);
+        $facility['employees'] = $this->employeeRepo->getByFacility($id);
 
         (new Ok($facility))->send();
     }
 
     /**
-     * Create a new facility, location, tags, and employees.
+     * Create a new facility.
+     * @throws BadRequest
      */
-    public function create()
+    public function create(): void
     {
         $data = Request::getJsonData();
         $dto = new FacilityDTO($data);
@@ -124,9 +131,13 @@ class FacilityController extends Injectable
     }
 
     /**
-     * Update a facility, location, tags, and employees.
+     * Update a facility.
+     * @param $id
+     * @return void
+     * @throws BadRequest
+     * @throws NotFound
      */
-    public function update($id)
+    public function update($id): void
     {
         $data = Request::getJsonData();
         $dto = new FacilityDTO($data);
@@ -149,26 +160,84 @@ class FacilityController extends Injectable
         $this->locationRepo->update($locationId, $dto->location);
         $this->facilityRepo->update($id, $dto->name);
 
-        // These parts (tag and employee) can be changed
-        $this->tagRepo->deleteFacilityTags($id);
-        foreach ($dto->tags as $tagName) {
-            if ($tagName === '') continue;
-            $tagId = $this->tagRepo->createIfNotExists($tagName);
-            $this->tagRepo->addTagToFacility($id, $tagId);
-        }
-
         (new Ok(['message' => 'Facility updated']))->send();
     }
 
     /**
      * Delete a facility.
+     * @param $id
+     * @return void
+     * @throws NotFound
      */
-    public function delete($id)
+    public function delete($id): void
     {
         $deleted = $this->facilityRepo->delete($id);
         if (!$deleted) {
             throw new NotFound(['error' => 'Facility not found']);
         }
         (new NoContent())->send();
+    }
+
+    /**
+     * Add tag(s) to facility.
+     * @param $facilityId
+     * @return void
+     * @throws NotFound
+     */
+    public function addTags($facilityId): void
+    {
+        $facility = $this->facilityRepo->getById($facilityId);
+        if (!$facility) {
+            throw new NotFound(['error' => 'Facility not found']);
+        }
+
+        $data = Request::getJsonData();
+        $tags = is_array($data) ? $data : [];
+        $added = [];
+
+        foreach ($tags as $tagName) {
+            $tagDTO = new TagDTO($tagName);
+            if ($tagDTO->isValid()) {
+                $tagId = $this->tagRepo->createIfNotExists($tagDTO->name);
+                // If no, then add
+                if (!$this->tagRepo->facilityHasTag($facilityId, $tagId)) {
+                    $this->tagRepo->addTagToFacility($facilityId, $tagId);
+                    $added[] = $tagDTO->name;
+                }
+            }
+        }
+
+        (new Ok(['added' => $added]))->send();
+    }
+
+    /**
+     * Remove tag(s) from facility
+     * @param $facilityId
+     * @return void
+     * @throws NotFound
+     */
+    public function removeTags($facilityId): void
+    {
+        $facility = $this->facilityRepo->getById($facilityId);
+        if (!$facility) {
+            throw new NotFound(['error' => 'Facility not found']);
+        }
+
+        $data = Request::getJsonData();
+        $tags = is_array($data) ? $data : [];
+        $removed = [];
+
+        foreach ($tags as $tagName) {
+            $tagDTO = new TagDTO($tagName);
+            if ($tagDTO->isValid()) {
+                $tagId = $this->tagRepo->findIdByName($tagDTO->name);
+                if ($tagId && $this->tagRepo->facilityHasTag($facilityId, $tagId)) {
+                    $this->tagRepo->removeFacilityTag($facilityId, $tagId);
+                    $removed[] = $tagDTO->name;
+                }
+            }
+        }
+
+        (new Ok(['removed' => $removed]))->send();
     }
 }

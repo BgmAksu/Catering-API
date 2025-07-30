@@ -26,13 +26,13 @@ class FacilityRepository
 
         // Get IDs
         $idSql = "
-        SELECT DISTINCT f.id
-        FROM facilities f
-        JOIN locations l ON f.location_id = l.id
-        $where
-        ORDER BY f.id
-        LIMIT :limit
-    ";
+            SELECT f.id
+            FROM facilities f
+            JOIN locations l ON f.location_id = l.id
+            $where
+            ORDER BY f.id
+            LIMIT :limit
+        ";
         $idStmt = $this->pdo->prepare($idSql);
         foreach ($params as $key => $value) {
             $idStmt->bindValue($key, $value);
@@ -48,20 +48,21 @@ class FacilityRepository
         // Fetch all details for those IDs
         $in = str_repeat('?,', count($ids) - 1) . '?';
         $sql = "
-        SELECT 
-            f.id as facility_id,
-            f.name as facility_name,
-            f.creation_date,
-            l.city, l.address, l.zip_code, l.country_code, l.phone_number,
-            t.id as tag_id,
-            t.name as tag_name
-        FROM facilities f
-        JOIN locations l ON f.location_id = l.id
-        LEFT JOIN facility_tags ft ON f.id = ft.facility_id
-        LEFT JOIN tags t ON ft.tag_id = t.id
-        WHERE f.id IN ($in)
-        ORDER BY f.id
-    ";
+            SELECT 
+                f.id as facility_id,
+                f.name as facility_name,
+                f.creation_date,
+                l.city, l.address, l.zip_code, l.country_code, l.phone_number,
+                t.id as tag_id,
+                t.name as tag_name
+            FROM facilities f
+            JOIN locations l ON f.location_id = l.id
+            LEFT JOIN facility_tags ft ON f.id = ft.facility_id
+            LEFT JOIN tags t ON ft.tag_id = t.id
+            WHERE f.id IN ($in)
+            ORDER BY f.id
+        ";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($ids);
 
@@ -91,7 +92,7 @@ class FacilityRepository
                 $facilities[$fid]['tags'][] = $row['tag_name'];
             }
         }
-        return [$facilities, $ids, $maxId];
+        return [$facilities, $maxId];
     }
 
     public function getById($id)
@@ -110,6 +111,7 @@ class FacilityRepository
             LEFT JOIN tags t ON ft.tag_id = t.id
             WHERE f.id = :id
         ";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
 

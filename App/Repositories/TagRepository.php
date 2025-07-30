@@ -19,13 +19,7 @@ class TagRepository
         return $this->create($tagName);
     }
 
-    public function deleteFacilityTags($facilityId)
-    {
-        $stmt = $this->pdo->prepare("DELETE FROM facility_tags WHERE facility_id=?");
-        $stmt->execute([$facilityId]);
-    }
-
-    public function addTagToFacility($facilityId, $tagId)
+    public function addTagToFacility($facilityId, $tagId): void
     {
         $stmt = $this->pdo->prepare("INSERT INTO facility_tags (facility_id, tag_id) VALUES (?, ?)");
         $stmt->execute([$facilityId, $tagId]);
@@ -53,7 +47,7 @@ class TagRepository
         return $this->pdo->lastInsertId();
     }
 
-    public function update($id, $name)
+    public function update($id, $name): void
     {
         $stmt = $this->pdo->prepare("UPDATE tags SET name = ? WHERE id = ?");
         $stmt->execute([$name, $id]);
@@ -66,7 +60,7 @@ class TagRepository
         return $stmt->rowCount();
     }
 
-    public function existsByName($name, $excludeId = null)
+    public function existsByName($name, $excludeId = null): bool
     {
         if ($excludeId !== null) {
             $stmt = $this->pdo->prepare("SELECT 1 FROM tags WHERE name = ? AND id != ?");
@@ -82,5 +76,19 @@ class TagRepository
         $stmt = $this->pdo->prepare("SELECT id FROM tags WHERE name = ?");
         $stmt->execute([$name]);
         return $stmt->fetchColumn();
+    }
+
+    public function facilityHasTag($facilityId, $tagId): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM facility_tags WHERE facility_id=? AND tag_id=?");
+        $stmt->execute([$facilityId, $tagId]);
+        return (bool)$stmt->fetchColumn();
+    }
+
+    public function removeFacilityTag($facilityId, $tagId)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM facility_tags WHERE facility_id=? AND tag_id=?");
+        $stmt->execute([$facilityId, $tagId]);
+        return $stmt->rowCount();
     }
 }
