@@ -2,6 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Helper\Request;
+use App\Helper\Sanitizer;
+use App\Helper\Validator;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -9,8 +12,6 @@ use App\Plugins\Http\Response\NoContent;
 use App\Plugins\Http\Exceptions\BadRequest;
 use App\Plugins\Http\Exceptions\NotFound;
 use App\Repositories\LocationRepository;
-use App\Helper\Sanitizer;
-use App\Helper\Validator;
 
 class LocationController extends Injectable
 {
@@ -28,8 +29,8 @@ class LocationController extends Injectable
      */
     public function list()
     {
-        $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) && $_GET['limit'] > 0 ? (int)$_GET['limit'] : 20;
-        $cursor = isset($_GET['cursor']) && is_numeric($_GET['cursor']) ? (int)$_GET['cursor'] : 0;
+        $limit = Request::limitDecider();
+        $cursor = Request::cursorDecider();
 
         $locations = $this->locationRepo->getPaginated($limit, $cursor);
         $maxId = count($locations) ? end($locations)['id'] : $cursor;
@@ -61,7 +62,7 @@ class LocationController extends Injectable
      */
     public function create()
     {
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = Request::getJsonData();
         $location = Sanitizer::sanitizeAll($data);
 
         // Validation
@@ -85,7 +86,7 @@ class LocationController extends Injectable
      */
     public function update($id)
     {
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = Request::getJsonData();
         $location = Sanitizer::sanitizeAll($data);
 
         // Validation

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Helper\Request;
 use App\Helper\Sanitizer;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
@@ -26,10 +27,8 @@ class EmployeeController extends Injectable
     // Usage: /api/facilities/{fid}/employees?limit=10&cursor=0
     public function list($facilityId)
     {
-        $pdo = $this->db->getConnection();
-
-        $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) && $_GET['limit'] > 0 ? (int)$_GET['limit'] : 20;
-        $cursor = isset($_GET['cursor']) && is_numeric($_GET['cursor']) ? (int)$_GET['cursor'] : 0;
+        $limit = Request::limitDecider();
+        $cursor = Request::cursorDecider();
 
         $employees = $this->employeeRepo->getPaginatedByFacility($facilityId, $limit, $cursor);
         $maxId = count($employees) ? end($employees)['id'] : $cursor;
@@ -56,7 +55,7 @@ class EmployeeController extends Injectable
     // Add new employee to a facility
     public function create($facilityId)
     {
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = Request::getJsonData();
         $emp = Sanitizer::sanitizeAll($data);
 
         if (!$emp['name'] || !$emp['email'] || !$emp['phone'] || !$emp['position']) {
@@ -70,7 +69,7 @@ class EmployeeController extends Injectable
     // Update an employee
     public function update($employeeId)
     {
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = Request::getJsonData();
         $emp = Sanitizer::sanitizeAll($data);
 
         if (!$emp['name'] || !$emp['email'] || !$emp['phone'] || !$emp['position']) {
