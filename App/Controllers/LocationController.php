@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\DTO\LocationDTO;
 use App\Helper\Request;
+use App\Middleware\Authenticate;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -16,13 +17,10 @@ class LocationController extends Injectable
 {
     protected $pdo;
     protected LocationRepository $locationRepo;
-    /**
-     * @var mixed|void
-     */
-    private $db;
 
     public function __construct()
     {
+        Authenticate::check();
         $this->pdo = $this->db->getConnection();
         $this->locationRepo = new LocationRepository($this->pdo);
     }

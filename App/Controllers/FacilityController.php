@@ -6,6 +6,7 @@ use App\DTO\FacilityDTO;
 use App\DTO\TagDTO;
 use App\Helper\Request;
 use App\Helper\Sanitizer;
+use App\Middleware\Authenticate;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -24,13 +25,10 @@ class FacilityController extends Injectable
     protected EmployeeRepository $employeeRepo;
     protected TagRepository $tagRepo;
     protected LocationRepository $locationRepo;
-    /**
-     * @var mixed|void
-     */
-    private $db;
 
     public function __construct()
     {
+        Authenticate::check();
         $this->pdo = $this->db->getConnection();
         $this->facilityRepo = new FacilityRepository($this->pdo);
         $this->employeeRepo = new EmployeeRepository($this->pdo);

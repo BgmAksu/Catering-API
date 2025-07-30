@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\DTO\TagDTO;
 use App\Helper\Request;
+use App\Middleware\Authenticate;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -17,13 +18,9 @@ class TagController extends Injectable
     protected $pdo;
     protected TagRepository $tagRepo;
 
-    /**
-     * @var mixed|void
-     */
-    private $db;
-
     public function __construct()
     {
+        Authenticate::check();
         $this->pdo = $this->db->getConnection();
         $this->tagRepo = new TagRepository($this->pdo);
     }
