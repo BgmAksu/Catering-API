@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
+use App\DTO\EmployeeDTO;
 use App\Helper\Request;
-use App\Helper\Sanitizer;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -21,7 +21,6 @@ class EmployeeController extends Injectable
         $this->pdo = $this->db->getConnection();
         $this->employeeRepo = new EmployeeRepository($this->pdo);
     }
-
 
     // List all employees for a facility with cursor-based pagination
     // Usage: /api/facilities/{fid}/employees?limit=10&cursor=0
@@ -56,13 +55,13 @@ class EmployeeController extends Injectable
     public function create($facilityId)
     {
         $data = Request::getJsonData();
-        $emp = Sanitizer::sanitizeAll($data);
+        $dto = new EmployeeDTO($data);
 
-        if (!$emp['name'] || !$emp['email'] || !$emp['phone'] || !$emp['position']) {
+        if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Invalid input']);
         }
 
-        $id = $this->employeeRepo->create($facilityId, $emp);
+        $id = $this->employeeRepo->create($facilityId, $dto->asArray());
         (new Created(['id' => $id]))->send();
     }
 
@@ -70,16 +69,17 @@ class EmployeeController extends Injectable
     public function update($employeeId)
     {
         $data = Request::getJsonData();
-        $emp = Sanitizer::sanitizeAll($data);
+        $dto = new EmployeeDTO($data);
 
-        if (!$emp['name'] || !$emp['email'] || !$emp['phone'] || !$emp['position']) {
+        if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Invalid input']);
         }
 
-        $updated = $this->employeeRepo->update($employeeId, $emp);
+        $updated = $this->employeeRepo->update($employeeId, $dto->asArray());
         if (!$updated) {
             throw new NotFound(['error' => 'Employee not found']);
         }
+
         (new Ok(['message' => 'Employee updated']))->send();
     }
 

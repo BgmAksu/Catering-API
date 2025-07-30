@@ -2,9 +2,8 @@
 
 namespace App\Controllers;
 
+use App\DTO\LocationDTO;
 use App\Helper\Request;
-use App\Helper\Sanitizer;
-use App\Helper\Validator;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -63,20 +62,13 @@ class LocationController extends Injectable
     public function create()
     {
         $data = Request::getJsonData();
-        $location = Sanitizer::sanitizeAll($data);
+        $dto = new LocationDTO($data);
 
-        // Validation
-        if (
-            !Validator::notEmpty($location['city'] ?? '') ||
-            !Validator::notEmpty($location['address'] ?? '') ||
-            !Validator::zipCode($location['zip_code'] ?? '') ||
-            !Validator::countryCode($location['country_code'] ?? '') ||
-            !Validator::phone($location['phone_number'] ?? '')
-        ) {
-            throw new BadRequest(['error' => 'Invalid or missing location fields']);
+        if (!$dto->isValid()) {
+            throw new BadRequest(['error' => 'Invalid input']);
         }
 
-        $locationId = $this->locationRepo->create($location);
+        $locationId = $this->locationRepo->create($dto->asArray());
         (new Created(['id' => $locationId]))->send();
     }
 
@@ -87,20 +79,13 @@ class LocationController extends Injectable
     public function update($id)
     {
         $data = Request::getJsonData();
-        $location = Sanitizer::sanitizeAll($data);
+        $dto = new LocationDTO($data);
 
-        // Validation
-        if (
-            !Validator::notEmpty($location['city'] ?? '') ||
-            !Validator::notEmpty($location['address'] ?? '') ||
-            !Validator::zipCode($location['zip_code'] ?? '') ||
-            !Validator::countryCode($location['country_code'] ?? '') ||
-            !Validator::phone($location['phone_number'] ?? '')
-        ) {
-            throw new BadRequest(['error' => 'Invalid or missing location fields']);
+        if (!$dto->isValid()) {
+            throw new BadRequest(['error' => 'Invalid input']);
         }
 
-        $updated = $this->locationRepo->update($id, $location);
+        $updated = $this->locationRepo->update($id, $dto->asArray());
         if (!$updated) {
             throw new NotFound(['error' => 'Location not found']);
         }

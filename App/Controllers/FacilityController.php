@@ -2,9 +2,9 @@
 
 namespace App\Controllers;
 
+use App\DTO\FacilityDTO;
 use App\Helper\Request;
 use App\Helper\Sanitizer;
-use App\Helper\Validator;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -105,41 +105,19 @@ class FacilityController extends Injectable
     public function create()
     {
         $data = Request::getJsonData();
+        $dto = new FacilityDTO($data);
 
-        $name = Sanitizer::string($data['name'] ?? '');
-        $location = Sanitizer::sanitizeAll($data['location'] ?? []);
-        $tags = Sanitizer::sanitizeAll($data['tags'] ?? []);
-        $employees = isset($data['employees']) && is_array($data['employees']) ? Sanitizer::sanitizeAll($data['employees']) : [];
-
-        if (
-            !Validator::notEmpty($name) ||
-            !Validator::notEmpty($location['city'] ?? '') ||
-            !Validator::notEmpty($location['address'] ?? '') ||
-            !Validator::zipCode($location['zip_code'] ?? '') ||
-            !Validator::countryCode($location['country_code'] ?? '') ||
-            !Validator::phone($location['phone_number'] ?? '')
-        ) {
+        if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Invalid input']);
         }
 
-        $locationId = $this->locationRepo->create($location);
-        $facilityId = $this->facilityRepo->create($name, $locationId);
+        $locationId = $this->locationRepo->create($dto->location);
+        $facilityId = $this->facilityRepo->create($dto->name, $locationId);
 
-        foreach ($tags as $tagName) {
+        foreach ($dto->tags as $tagName) {
             if ($tagName === '') continue;
             $tagId = $this->tagRepo->createIfNotExists($tagName);
             $this->tagRepo->addTagToFacility($facilityId, $tagId);
-        }
-
-        foreach ($employees as $emp) {
-            if (
-                Validator::notEmpty($emp['name'] ?? '') &&
-                Validator::email($emp['email'] ?? '') &&
-                Validator::phone($emp['phone'] ?? '') &&
-                Validator::notEmpty($emp['position'] ?? '')
-            ) {
-                $this->employeeRepo->create($facilityId, $emp);
-            }
         }
 
         (new Created(['id' => $facilityId]))->send();
@@ -151,23 +129,11 @@ class FacilityController extends Injectable
     public function update($id)
     {
         $data = Request::getJsonData();
+        $dto = new FacilityDTO($data);
 
-        $name = Sanitizer::string($data['name'] ?? '');
-        $location = Sanitizer::sanitizeAll($data['location'] ?? []);
-        $tags = Sanitizer::sanitizeAll($data['tags'] ?? []);
-        $employees = isset($data['employees']) && is_array($data['employees']) ? Sanitizer::sanitizeAll($data['employees']) : [];
-
-        if (
-            !Validator::notEmpty($name) ||
-            !Validator::notEmpty($location['city'] ?? '') ||
-            !Validator::notEmpty($location['address'] ?? '') ||
-            !Validator::zipCode($location['zip_code'] ?? '') ||
-            !Validator::countryCode($location['country_code'] ?? '') ||
-            !Validator::phone($location['phone_number'] ?? '')
-        ) {
+        if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Invalid input']);
         }
-
 
         // Find existing facility and its location
         $facility = $this->facilityRepo->getById($id);
@@ -180,27 +146,15 @@ class FacilityController extends Injectable
             throw new NotFound(['error' => 'Location not found']);
         }
 
-        $this->locationRepo->update($locationId, $location);
-        $this->facilityRepo->update($id, $name);
+        $this->locationRepo->update($locationId, $dto->location);
+        $this->facilityRepo->update($id, $dto->name);
 
         // These parts (tag and employee) can be changed
         $this->tagRepo->deleteFacilityTags($id);
-        foreach ($tags as $tagName) {
+        foreach ($dto->tags as $tagName) {
             if ($tagName === '') continue;
             $tagId = $this->tagRepo->createIfNotExists($tagName);
             $this->tagRepo->addTagToFacility($id, $tagId);
-        }
-
-        $this->employeeRepo->deleteAllByFacility($id);
-        foreach ($employees as $emp) {
-            if (
-                Validator::notEmpty($emp['name'] ?? '') &&
-                Validator::email($emp['email'] ?? '') &&
-                Validator::phone($emp['phone'] ?? '') &&
-                Validator::notEmpty($emp['position'] ?? '')
-            ) {
-                $this->employeeRepo->create($id, $emp);
-            }
         }
 
         (new Ok(['message' => 'Facility updated']))->send();

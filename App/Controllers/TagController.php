@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
+use App\DTO\TagDTO;
 use App\Helper\Request;
-use App\Helper\Sanitizer;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -62,16 +62,16 @@ class TagController extends Injectable
     public function create()
     {
         $data = Request::getJsonData();
-        $name = Sanitizer::string($data['name'] ?? '');
+        $dto = new TagDTO($data);
 
-        if (empty($name)) {
+        if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Tag name is required']);
         }
-        if ($this->tagRepo->existsByName($name)) {
+        if ($this->tagRepo->existsByName($dto->name)) {
             throw new BadRequest(['error' => 'Tag name must be unique']);
         }
 
-        $id = $this->tagRepo->create($name);
+        $id = $this->tagRepo->create($dto->name);
         (new Created(['id' => $id]))->send();
     }
 
@@ -82,18 +82,18 @@ class TagController extends Injectable
     public function update($id)
     {
         $data = Request::getJsonData();
-        $name = Sanitizer::string($data['name'] ?? '');
+        $dto = new TagDTO($data);
 
-        if (empty($name)) {
+        if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Tag name is required']);
         }
         if (!$this->tagRepo->getById($id)) {
             throw new NotFound(['error' => 'Tag not found']);
         }
-        if ($this->tagRepo->existsByName($name, $id)) {
+        if ($this->tagRepo->existsByName($dto->name, $id)) {
             throw new BadRequest(['error' => 'Tag name must be unique']);
         }
-        $this->tagRepo->update($id, $name);
+        $this->tagRepo->update($id, $dto->name);
         (new Ok(['message' => 'Tag updated']))->send();
     }
 
