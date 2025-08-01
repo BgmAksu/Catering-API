@@ -1,0 +1,450 @@
+{
+  "info": {
+    "_postman_id": "dad8f025-df49-4993-9390-d09e4458e6b6",
+	"name": "DTT Back end assessment – Catering API",
+	"description": "The Postman collection for the DTT backend assessment test: Catering API.",
+	"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+	"_exporter_id": "4553050"
+  },
+  "item": [
+  	{
+		"name": "Test API",
+		"request": {
+			"method": "GET",
+			"header": [],
+			"url": {
+				"raw": "{{baseUrl}}/test",
+				"host": [
+					"{{baseUrl}}"
+				],
+				"path": [
+					"test"
+				]
+			},
+			"description": "API call used to test local development environment and database connection.\n\nShould print _'Hello World!'_ if all is OK."
+		},
+		"response": []
+	},
+    {
+      "name": "Create Facility",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Mega Bites\",\n  \"location\": {\n    \"city\": \"Utrect\",\n    \"address\": \"Keizersgracht 123\",\n    \"zip_code\": \"3015CJ\",\n    \"country_code\": \"NL\",\n    \"phone_number\": \"+31201234367\"\n  },\n  \"tags\": [\"Vegetarian\", \"Organic\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities"]
+        }
+      }
+    },
+    {
+      "name": "List Facilities (Pagination)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities?limit=2&cursor=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities"],
+          "query": [
+            { "key": "limit", "value": "2" },
+            { "key": "cursor", "value": "0" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Facility Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities", "1"]
+        }
+      }
+    },
+    {
+      "name": "Update Facility",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Green Bites Updated\",\n  \"location\": {\n    \"city\": \"Rotterdam\",\n    \"address\": \"Nieuwe Markt 14\",\n    \"zip_code\": \"3011AG\",\n    \"country_code\": \"NL\",\n    \"phone_number\": \"+31201234568\"\n  },\n  \"tags\": [\"Vegan\", \"Gluten Free\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities", "1"]
+        }
+      }
+    },
+    {
+      "name": "Delete Facility",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities", "1"]
+        }
+      }
+    },
+    {
+      "name": "Facility Search",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities/search?name=Green&city=Amsterdam&limit=2&cursor=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities", "search"],
+          "query": [
+            { "key": "name", "value": "Green" },
+            { "key": "city", "value": "Amsterdam" },
+            { "key": "limit", "value": "2" },
+            { "key": "cursor", "value": "0" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Add Tags to Facility",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\"Meat\"]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities/1/tags",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities", "1", "tags"]
+        }
+      }
+    },
+    {
+      "name": "Remove Tags from Facility",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\"Vegetarian\"]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities/1/tags",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities", "1", "tags"]
+        }
+      }
+    },
+    {
+      "name": "List Employees (of Facility)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities/1/employees?limit=2&cursor=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities", "1", "employees"],
+          "query": [
+            { "key": "limit", "value": "2" },
+            { "key": "cursor", "value": "0" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Employee",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Alex Bill\",\n  \"email\": \"bill@greenbites.com\",\n  \"phone\": \"+31201113333\",\n  \"position\": \"Waiter\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/facilities/1/employees",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "facilities", "1", "employees"]
+        }
+      }
+    },
+    {
+      "name": "Employee Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/employees/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "employees", "1"]
+        }
+      }
+    },
+    {
+      "name": "Update Employee",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Begum Kaya\",\n  \"email\": \"begumkaya@greenbites.com\",\n  \"phone\": \"+31201117777\",\n  \"position\": \"Chef\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/employees/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "employees", "1"]
+        }
+      }
+    },
+    {
+      "name": "Delete Employee",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/employees/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "employees", "1"]
+        }
+      }
+    },
+    {
+      "name": "List Tags (Pagination)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tags?limit=2&cursor=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "tags"],
+          "query": [
+            { "key": "limit", "value": "2" },
+            { "key": "cursor", "value": "0" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Tag",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Japanese\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tags",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "tags"]
+        }
+      }
+    },
+    {
+      "name": "Tag Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tags/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "tags", "1"]
+        }
+      }
+    },
+    {
+      "name": "Update Tag",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Vegetarian Updated\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tags/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "tags", "1"]
+        }
+      }
+    },
+    {
+      "name": "Delete Tag",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tags/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "tags", "1"]
+        }
+      }
+    },
+    {
+      "name": "List Locations (Pagination)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/locations?limit=2&cursor=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "locations"],
+          "query": [
+            { "key": "limit", "value": "2" },
+            { "key": "cursor", "value": "0" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Location",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"city\": \"Den Haag\",\n  \"address\": \"Some Street 12\",\n  \"zip_code\": \"2511AA\",\n  \"country_code\": \"NL\",\n  \"phone_number\": \"+31201110000\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/locations",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "locations"]
+        }
+      }
+    },
+    {
+      "name": "Location Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/locations/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "locations", "1"]
+        }
+      }
+    },
+    {
+      "name": "Update Location",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"city\": \"Utrecht\",\n  \"address\": \"Oudegracht 10\",\n  \"zip_code\": \"3511AL\",\n  \"country_code\": \"NL\",\n  \"phone_number\": \"+31201119999\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/locations/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "locations", "1"]
+        }
+      }
+    },
+    {
+      "name": "Delete Location",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer 97e01d39b8d5a12883bc3b776f21f6c4ac7732e4e9d96a0e87a3b5c0b15a79f4" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/locations/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "locations", "1"]
+        }
+      }
+    }
+  ],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

@@ -1,3 +1,5 @@
+-- TODO 1: Give unique name for foreign keys eliminate name confusion on DBA side
+
 -- LOCATIONS TABLE
 CREATE TABLE IF NOT EXISTS locations (
                             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -14,7 +16,7 @@ CREATE TABLE IF NOT EXISTS facilities (
                             name VARCHAR(255) NOT NULL,
                             creation_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             location_id INT UNIQUE,  -- UNIQUE for one-to-one relationship!
-                            FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+                            FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE -- TODO 1
     );
 
 
@@ -30,8 +32,8 @@ CREATE TABLE IF NOT EXISTS facility_tags (
                             facility_id INT NOT NULL,
                             tag_id INT NOT NULL,
                             PRIMARY KEY (facility_id, tag_id),
-                            FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
-                            FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+                            FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE, -- TODO 1
+                            FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE -- TODO 1
     );
 
 -- EMPLOYEES TABLE (MANY-TO-ONE to facilities)
@@ -41,6 +43,6 @@ CREATE TABLE IF NOT EXISTS employees (
                             name VARCHAR(100) NOT NULL,
                             email VARCHAR(100) NOT NULL,
                             phone VARCHAR(20) NOT NULL,
-                            position VARCHAR(100) NOT NULL,
-                            FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE
+                            position VARCHAR(100) NOT NULL, -- refers to employee role like manager
+                            FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE -- TODO 1
     );
