@@ -7,6 +7,8 @@ A modern, Docker-ready PHP RESTful API backend project.
 ## 🚀 Quick Start (with Docker)
 
 ### Requirements
+- PHP Version: 8.4
+- Before starting services, run this command in project root folder: ``composer install``
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
 - [Postman](https://www.postman.com/) 
