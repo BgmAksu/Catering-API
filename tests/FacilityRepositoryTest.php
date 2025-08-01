@@ -15,7 +15,7 @@ class FacilityRepositoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->pdo = new PDO('mysql:host=localhost;dbname=testdb', 'testuser', 'testpass');
+        $this->pdo = new PDO('mysql:host=testdb;dbname=testdb;port=3306', 'testuser', 'testpass');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->repo = new FacilityRepository($this->pdo);
         $this->locRepo = new LocationRepository($this->pdo);

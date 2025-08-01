@@ -2,6 +2,8 @@
 
 namespace tests;
 
+use App\Repositories\FacilityRepository;
+use App\Repositories\LocationRepository;
 use PDO;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\EmployeeRepository;
@@ -10,13 +12,27 @@ class EmployeeRepositoryTest extends TestCase
 {
     protected $pdo;
     protected $repo;
-    protected $facilityId = 1; // Make sure this facility exists in test DB
+    protected $locRepo;
+    protected $facRepo;
+    protected $facilityId; // Make sure this facility exists in test DB
 
     protected function setUp(): void
     {
-        $this->pdo = new PDO('mysql:host=localhost;dbname=testdb', 'testuser', 'testpass');
+        $this->pdo = new PDO('mysql:host=testdb;dbname=testdb;port=3306', 'testuser', 'testpass');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->repo = new EmployeeRepository($this->pdo);
+        $this->locRepo = new LocationRepository($this->pdo);
+        $this->facRepo = new FacilityRepository($this->pdo);
+
+        $location = [
+            'city' => 'Test Employee City',
+            'address' => 'Test Address 123',
+            'zip_code' => '98765',
+            'country_code' => 'NL',
+            'phone_number' => '+31000000000'
+        ];
+        $locId = $this->locRepo->create($location);
+        $this->facilityId = $this->facRepo->create('Test Employee Facility', $locId);
     }
 
     public function testGetPaginatedByFacility()

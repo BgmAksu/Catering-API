@@ -2,6 +2,8 @@
 
 namespace tests;
 
+use App\Repositories\FacilityRepository;
+use App\Repositories\LocationRepository;
 use PDO;
 use PDOException;
 use PHPUnit\Framework\TestCase;
@@ -11,12 +13,26 @@ class TagRepositoryTest extends TestCase
 {
     protected $pdo;
     protected $repo;
-    protected $facilityId = 1; // Make sure this facility exists in test DB
+    protected $locRepo;
+    protected $facRepo;
+    protected $facilityId; // Make sure this facility exists in test DB
     protected function setUp(): void
     {
-        $this->pdo = new PDO('mysql:host=localhost;dbname=testdb', 'root', '');
+        $this->pdo = new PDO('mysql:host=testdb;dbname=testdb;port=3306', 'testuser', 'testpass');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->repo = new TagRepository($this->pdo);
+        $this->locRepo = new LocationRepository($this->pdo);
+        $this->facRepo = new FacilityRepository($this->pdo);
+
+        $location = [
+            'city' => 'Test Tag City',
+            'address' => 'Test Address 123',
+            'zip_code' => '98765',
+            'country_code' => 'NL',
+            'phone_number' => '+31000000000'
+        ];
+        $locId = $this->locRepo->create($location);
+        $this->facilityId = $this->facRepo->create('Test Tag Facility', $locId);
     }
 
     public function testCreateTagIfNotExistsSuccessfully()

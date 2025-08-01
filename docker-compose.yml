@@ -1,0 +1,47 @@
+services:
+  # API
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      # Default (development/prod)
+      DB_HOST: db
+      DB_DATABASE: dtt-catering
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    depends_on:
+      - db
+
+  # Test
+  testdb:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+      MYSQL_ROOT_PASSWORD: testroot
+    ports:
+      - "3307:3306"
+    volumes:
+      - testdbdata:/var/lib/mysql
+      - ./docker/mysql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  # Normal db (production)
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: dtt-catering
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+volumes:
+  dbdata:
+  testdbdata:
