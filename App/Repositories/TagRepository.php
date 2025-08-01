@@ -59,9 +59,18 @@ class TagRepository
 
     public function delete($id)
     {
-        $stmt = $this->pdo->prepare("DELETE FROM tags WHERE id = ?");
+        // Check if tag is used by any facility
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM facility_tags WHERE tag_id=?");
         $stmt->execute([$id]);
-        return $stmt->rowCount();
+        $usedCount = $stmt->fetchColumn();
+
+        if ($usedCount > 0) {
+            return 0;
+        } else {
+            $stmt = $this->pdo->prepare("DELETE FROM tags WHERE id = ?");
+            $stmt->execute([$id]);
+            return $stmt->rowCount();
+        }
     }
 
     public function existsByName($name): bool

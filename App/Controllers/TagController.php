@@ -124,7 +124,7 @@ class TagController extends Injectable
     {
         $deleted = $this->tagRepo->delete($id);
         if (!$deleted) {
-            throw new NotFound(['error' => 'Tag not found']);
+            throw new NotFound(['error' => 'Tag not found or used by a facility']);
         }
         (new NoContent())->send();
     }

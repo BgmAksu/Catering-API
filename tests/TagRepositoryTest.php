@@ -106,6 +106,33 @@ class TagRepositoryTest extends TestCase
         $this->assertFalse($fetched);
     }
 
+    public function testDeleteTagInUseByFacilityThrowsException()
+    {
+        // Step 1: Create a tag
+        $tagName = 'DeleteTestTag_' . uniqid();
+        $tagId = $this->repo->create($tagName);
+
+        // Step 2: Create a location and facility to use this tag
+        $location = [
+            'city' => 'TagTestCity',
+            'address' => 'TagTestAddr',
+            'zip_code' => '54321',
+            'country_code' => 'NL',
+            'phone_number' => '+31099999999'
+        ];
+        $locationId = $this->locRepo->create($location);
+        $facilityName = 'Tag Test Facility Delete' . uniqid();
+        $facilityId = $this->facRepo->create($facilityName, $locationId);
+
+        // Step 3: Attach the tag to the facility
+        $this->repo->addTagToFacility($facilityId, $tagId);
+
+        // Step 4: Try to delete the tag - should return 0
+        $deleted = $this->repo->delete($tagId);
+        $this->assertEquals(0, $deleted, "Deleting a tag in use should return 0.");
+    }
+
+
     public function testAddAndRemoveTagToFacility()
     {
         // Create tag

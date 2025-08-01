@@ -2,6 +2,7 @@
 
 namespace tests;
 
+use App\Repositories\FacilityRepository;
 use PDO;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\LocationRepository;
@@ -10,12 +11,15 @@ class LocationRepositoryTest extends TestCase
 {
     protected $pdo;
     protected $repo;
+    protected $facRepo;
 
     protected function setUp(): void
     {
         $this->pdo = new PDO('mysql:host=testdb;dbname=testdb;port=3306', 'testuser', 'testpass');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->repo = new LocationRepository($this->pdo);
+        $this->facRepo = new FacilityRepository($this->pdo);
+
     }
 
     public function testCreateAndGetById()
@@ -81,6 +85,27 @@ class LocationRepositoryTest extends TestCase
         // Verify deletion
         $fetched = $this->repo->getById($id);
         $this->assertFalse($fetched);
+    }
+
+    public function testDeleteLocationInUseByFacilityThrowsException()
+    {
+        // Step 1: Create a location
+        $location = [
+            'city' => 'DeleteTestCity',
+            'address' => 'DeleteTestAddr',
+            'zip_code' => '12345',
+            'country_code' => 'NL',
+            'phone_number' => '+31011111111'
+        ];
+        $locationId = $this->repo->create($location);
+
+        // Step 2: Create a facility using this location
+        $facilityName = 'Delete Test Facility Location' . uniqid();
+        $facilityId = $this->facRepo->create($facilityName, $locationId);
+
+        // Step 3: Try to delete the location - should return 0
+        $deleted = $this->repo->delete($locationId);
+        $this->assertEquals(0, $deleted, "Deleting a location in use should return 0.");
     }
 
     public function testGetPaginated()

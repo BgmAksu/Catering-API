@@ -120,7 +120,7 @@ class LocationController extends Injectable
     {
         $deleted = $this->locationRepo->delete($id);
         if (!$deleted) {
-            throw new NotFound(['error' => 'Location not found']);
+            throw new NotFound(['error' => 'Location not found or used by a facility']);
         }
         (new NoContent())->send();
     }
