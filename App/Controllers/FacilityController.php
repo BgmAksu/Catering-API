@@ -71,7 +71,7 @@ class FacilityController extends Injectable
 
         list($facilities, $nextCursor) = $this->facilityRepo->getPaginated($limit, $cursor);
         foreach ($facilities as $fid => &$fac) {
-            $fac['employees'] = $this->employeeRepo->getByFacility($fid);
+            $fac['employees'] = $this->employeeRepo->getByFacility($fac['id']);
         }
 
         (new Ok([
@@ -101,7 +101,7 @@ class FacilityController extends Injectable
 
         list($facilities, $nextCursor) = $this->facilityRepo->getPaginated($limit, $cursor, $filters);
         foreach ($facilities as $fid => &$fac) {
-            $fac['employees'] = $this->employeeRepo->getByFacility($fid);
+            $fac['employees'] = $this->employeeRepo->getByFacility($fac['id']);
         }
 
         (new Ok([
