@@ -8,6 +8,7 @@ use App\Helper\Request;
 use App\Helper\Sanitizer;
 use App\Middleware\Authenticate;
 use App\Plugins\Di\Injectable;
+use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
 use App\Plugins\Http\Response\NoContent;
@@ -113,7 +114,7 @@ class FacilityController extends Injectable
      * POST /api/facilities
      * Body: { "name": "...", "location": {...}, "tags": [...] }
      * @return void
-     * @throws BadRequest
+     * @throws UnprocessableEntity
      */
     public function create(): void
     {
@@ -121,7 +122,10 @@ class FacilityController extends Injectable
         $dto = new FacilityDTO($data);
 
         if (!$dto->isValid()) {
-            throw new BadRequest(['error' => 'Invalid input']);
+            throw new UnprocessableEntity([
+                'message' => 'Validation failed',
+                'errors'  => $dto->errors(),
+            ]);
         }
 
         $locationId = $this->locationRepo->create($dto->location);
