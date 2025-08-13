@@ -13,7 +13,20 @@ class Request
      */
     public static function cursorDecider(): int
     {
-        return isset($_GET['cursor']) && is_numeric($_GET['cursor']) ? (int)$_GET['cursor'] : 0;
+        $param = $_GET['cursor'] ?? null;
+        if ($param === null) {
+            return 0;
+        }
+        $token = trim((string)$param);
+
+        // Fast path: plain number
+        if ($token !== '' && ctype_digit($token)) {
+            return (int)$token;
+        }
+
+        // Try base64url
+        $decoded = Cursor::decode($token);
+        return $decoded ?? 0;
     }
 
     /**

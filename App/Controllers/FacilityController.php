@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\DTO\FacilityDTO;
 use App\DTO\TagDTO;
+use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Helper\Sanitizer;
 use App\Middleware\Authenticate;
@@ -76,7 +77,8 @@ class FacilityController extends Injectable
         (new Ok([
             'limit' => $limit,
             'cursor' => $cursor,
-            'next_cursor' => $nextCursor,
+            'next_cursor' => Cursor::encodeOrNull($nextCursor),
+            'nc' => $nextCursor,
             'facilities' => array_values($facilities)
         ]))->send();
     }
@@ -105,7 +107,8 @@ class FacilityController extends Injectable
         (new Ok([
             'limit' => $limit,
             'cursor' => $cursor,
-            'next_cursor' => $nextCursor,
+            'next_cursor' => Cursor::encodeOrNull($nextCursor),
+            'nc' => $nextCursor,
             'facilities' => array_values($facilities)
         ]))->send();
     }

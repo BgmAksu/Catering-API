@@ -15,6 +15,7 @@ class FacilityRepository
     {
         $this->pdo = $pdo;
     }
+
     /**
      * Cursor-based pagination for facilities with optional filters.
      * Single query using GROUP BY + GROUP_CONCAT to avoid N+1.
@@ -28,7 +29,7 @@ class FacilityRepository
     {
         $limitPlusOne = $limit + 1;
 
-        $where = ["f.id > :cursor"];
+        $where = ["f.id >= :cursor"];
         $params = [':cursor' => $cursor];
 
         if (!empty($filters['name'])) {
