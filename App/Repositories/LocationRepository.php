@@ -34,6 +34,35 @@ class LocationRepository
         return $stmt->rowCount();
     }
 
+    /**
+     * Partially update a location with only provided fields.
+     * @param int   $locationId
+     * @param array $patch keys: city,address,zip_code,country_code,phone_number
+     * @return int affected rows
+     */
+    public function updatePartial(int $locationId, array $patch): int
+    {
+        if (empty($patch)) {
+            return 0;
+        }
+        $fields = [];
+        $values = [];
+        foreach (['city','address','zip_code','country_code','phone_number'] as $k) {
+            if (array_key_exists($k, $patch)) {
+                $fields[] = "$k = ?";
+                $values[] = $patch[$k];
+            }
+        }
+        if (empty($fields)) {
+            return 0;
+        }
+        $values[] = $locationId;
+        $sql = "UPDATE locations SET " . implode(', ', $fields) . " WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($values);
+        return $stmt->rowCount();
+    }
+
     public function getById($id)
     {
         $stmt = $this->pdo->prepare("SELECT id, city, address, zip_code, country_code, phone_number FROM locations WHERE id = ?");

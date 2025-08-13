@@ -128,22 +128,31 @@ class FacilityController extends Injectable
             ]);
         }
 
-        $locationId = $this->locationRepo->create($dto->location);
-        $facilityId = $this->facilityRepo->create($dto->name, $locationId);
+        // Use a single transaction for location + facility + tags
+        $this->pdo->beginTransaction();
+        try {
+            $locationId = $this->locationRepo->create($dto->location);
+            $facilityId = $this->facilityRepo->create($dto->name, $locationId);
 
-        foreach ($dto->tags as $tagName) {
-            if ($tagName === '') continue;
-            $tagId = $this->tagRepo->createIfNotExists($tagName);
-            $this->tagRepo->addTagToFacility($facilityId, $tagId);
+            foreach ($dto->tags as $tagName) {
+                if ($tagName === '') continue;
+                $tagId = $this->tagRepo->createIfNotExists($tagName);
+                $this->tagRepo->addTagToFacility($facilityId, $tagId);
+            }
+
+            $this->pdo->commit();
+            (new Created(['id' => $facilityId]))->send();
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
         }
-
-        (new Created(['id' => $facilityId]))->send();
     }
 
     /**
      * Update a facility by ID.
      * PUT /api/facilities/{facility_id}
      * Body: { "name": "...", "location": {...} }
+     * Only provided fields are validated and updated.
      * @param $id
      * @return void
      * @throws BadRequest
@@ -152,27 +161,64 @@ class FacilityController extends Injectable
     public function update($id): void
     {
         $data = Request::getJsonData();
-        $dto = new FacilityDTO($data);
+        $dto = new FacilityDTO(is_array($data) ? $data : [], true); // update mode
 
         if (!$dto->isValid()) {
-            throw new BadRequest(['error' => 'Invalid input']);
+            // Return field-level 422 instead of a generic 400
+            throw new UnprocessableEntity([
+                'message' => 'Validation failed',
+                'errors'  => $dto->errors(),
+            ]);
         }
 
-        // Find existing facility and its location
+        // Ensure facility exists (and get current location id)
         $facility = $this->facilityRepo->getById($id);
         if (!$facility) {
             throw new NotFound(['error' => 'Facility not found']);
         }
-
         $locationId = $this->facilityRepo->getLocationId($id);
         if (!$locationId) {
             throw new NotFound(['error' => 'Location not found']);
         }
 
-        $this->locationRepo->update($locationId, $dto->location);
-        $this->facilityRepo->update($id, $dto->name);
+        $this->pdo->beginTransaction();
+        try {
+            // Patch "name" if provided
+            if ($dto->provided('name')) {
+                $this->facilityRepo->update($id, $dto->name);
+            }
 
-        (new Ok(['message' => 'Facility updated']))->send();
+            // Patch "location" fields if provided
+            if ($dto->provided('location', '_provided')) {
+                $locPatch = [];
+                foreach (['city','address','zip_code','country_code','phone_number'] as $k) {
+                    if ($dto->provided('location', $k)) {
+                        $locPatch[$k] = $dto->location[$k] ?? null;
+                    }
+                }
+                if (!empty($locPatch)) {
+                    $this->locationRepo->updatePartial((int)$locationId, $locPatch);
+                }
+            }
+
+            // Optional: handle tags when provided in update body (PATCH-like behavior: only ADD missing)
+            if ($dto->provided('tags')) {
+                foreach ($dto->tags as $tagName) {
+                    if ($tagName === '') continue;
+                    $tagId = $this->tagRepo->createIfNotExists($tagName);
+                    if (!$this->tagRepo->facilityHasTag($id, $tagId)) {
+                        $this->tagRepo->addTagToFacility($id, $tagId);
+                    }
+                }
+                // NOTE: This does not remove existing tags. For full replace, use the dedicated tags endpoints.
+            }
+
+            $this->pdo->commit();
+            (new Ok(['message' => 'Facility updated']))->send();
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     /**
