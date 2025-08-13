@@ -18,6 +18,7 @@ use App\Repositories\FacilityRepository;
 use App\Repositories\EmployeeRepository;
 use App\Repositories\TagRepository;
 use App\Repositories\LocationRepository;
+use Throwable;
 
 class FacilityController extends Injectable
 {
@@ -114,7 +115,7 @@ class FacilityController extends Injectable
      * POST /api/facilities
      * Body: { "name": "...", "location": {...}, "tags": [...] }
      * @return void
-     * @throws UnprocessableEntity
+     * @throws UnprocessableEntity|Throwable
      */
     public function create(): void
     {
@@ -134,15 +135,36 @@ class FacilityController extends Injectable
             $locationId = $this->locationRepo->create($dto->location);
             $facilityId = $this->facilityRepo->create($dto->name, $locationId);
 
-            foreach ($dto->tags as $tagName) {
-                if ($tagName === '') continue;
+            // Tags: ensure we always resolve a valid tag id before attaching
+            foreach ($dto->tags as $rawName) {
+                // normalize and skip empty values
+                $tagName = trim((string)$rawName);
+                if ($tagName === '') {
+                    continue;
+                }
+
+                // Try to create; when it already exists this may return false
                 $tagId = $this->tagRepo->createIfNotExists($tagName);
-                $this->tagRepo->addTagToFacility($facilityId, $tagId);
+
+                // Fallback: if creation returned false (already exists), look up the id
+                if (!$tagId) {
+                    $tagId = $this->tagRepo->findIdByName($tagName);
+                }
+
+                // If still not found, skip safely
+                if (!$tagId) {
+                    continue;
+                }
+
+                // Avoid duplicates on the pivot table
+                if (!$this->tagRepo->facilityHasTag($facilityId, (int)$tagId)) {
+                    $this->tagRepo->addTagToFacility($facilityId, (int)$tagId);
+                }
             }
 
             $this->pdo->commit();
             (new Created(['id' => $facilityId]))->send();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->pdo->rollBack();
             throw $e;
         }
@@ -201,21 +223,33 @@ class FacilityController extends Injectable
                 }
             }
 
-            // Optional: handle tags when provided in update body (PATCH-like behavior: only ADD missing)
-            if ($dto->provided('tags')) {
-                foreach ($dto->tags as $tagName) {
-                    if ($tagName === '') continue;
+            // Tags (PATCH-like): only ADD missing tags; do not remove existing ones
+            if (isset($data['tags']) && is_array($data['tags'])) {
+                foreach ($data['tags'] as $rawName) {
+                    $tagName = trim((string)$rawName);
+                    if ($tagName === '') {
+                        continue;
+                    }
+
+                    // Create or resolve existing id
                     $tagId = $this->tagRepo->createIfNotExists($tagName);
-                    if (!$this->tagRepo->facilityHasTag($id, $tagId)) {
-                        $this->tagRepo->addTagToFacility($id, $tagId);
+                    if (!$tagId) {
+                        $tagId = $this->tagRepo->findIdByName($tagName);
+                    }
+                    if (!$tagId) {
+                        continue;
+                    }
+
+                    // Attach only if missing
+                    if (!$this->tagRepo->facilityHasTag((int)$id, (int)$tagId)) {
+                        $this->tagRepo->addTagToFacility((int)$id, (int)$tagId);
                     }
                 }
-                // NOTE: This does not remove existing tags. For full replace, use the dedicated tags endpoints.
             }
 
             $this->pdo->commit();
             (new Ok(['message' => 'Facility updated']))->send();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->pdo->rollBack();
             throw $e;
         }
