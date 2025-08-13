@@ -26,18 +26,22 @@ class FacilityController extends Injectable
      * @var
      */
     protected $pdo;
+
     /**
      * @var FacilityRepository
      */
     protected FacilityRepository $facilityRepo;
+
     /**
      * @var EmployeeRepository
      */
     protected EmployeeRepository $employeeRepo;
+
     /**
      * @var TagRepository
      */
     protected TagRepository $tagRepo;
+
     /**
      * @var LocationRepository
      */
@@ -250,6 +254,7 @@ class FacilityController extends Injectable
                     if (!$tagId) {
                         $tagId = $this->tagRepo->findIdByName($tagName);
                     }
+
                     if (!$tagId) {
                         continue;
                     }

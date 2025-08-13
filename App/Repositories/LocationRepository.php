@@ -2,15 +2,25 @@
 
 namespace App\Repositories;
 
+/**
+ * Location Table related DB operations
+ */
 class LocationRepository
 {
+    /**
+     * @var
+     */
     protected $pdo;
     public function __construct($pdo)
     {
         $this->pdo = $pdo;
     }
 
-    public function create($location)
+    /**
+     * @param $location
+     * @return mixed
+     */
+    public function create($location): mixed
     {
         $stmt = $this->pdo->prepare(
             "INSERT INTO locations (city, address, zip_code, country_code, phone_number) VALUES (?, ?, ?, ?, ?)"
@@ -22,7 +32,12 @@ class LocationRepository
         return $this->pdo->lastInsertId();
     }
 
-    public function update($locationId, $location)
+    /**
+     * @param $locationId
+     * @param $location
+     * @return mixed
+     */
+    public function update($locationId, $location): mixed
     {
         $stmt = $this->pdo->prepare(
             "UPDATE locations SET city=?, address=?, zip_code=?, country_code=?, phone_number=? WHERE id=?"
@@ -63,14 +78,23 @@ class LocationRepository
         return $stmt->rowCount();
     }
 
-    public function getById($id)
+    /**
+     * @param $id
+     * @return mixed
+     */
+    public function getById($id): mixed
     {
         $stmt = $this->pdo->prepare("SELECT id, city, address, zip_code, country_code, phone_number FROM locations WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
-    public function getPaginated($limit, $cursor)
+    /**
+     * @param $limit
+     * @param $cursor
+     * @return mixed
+     */
+    public function getPaginated($limit, $cursor): mixed
     {
         $sql = "SELECT id, city, address, zip_code, country_code, phone_number FROM locations WHERE id > ? ORDER BY id LIMIT ?";
         $stmt = $this->pdo->prepare($sql);
@@ -80,7 +104,11 @@ class LocationRepository
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function delete($id)
+    /**
+     * @param $id
+     * @return int
+     */
+    public function delete($id): int
     {
         // Check if location is used by any facility
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM facilities WHERE location_id = ?");

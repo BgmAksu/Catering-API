@@ -4,12 +4,34 @@ namespace App\DTO;
 use App\Helper\Sanitizer;
 use App\Helper\Validator;
 
+/**
+ * Data Transfer Object for Location
+ */
 class LocationDTO
 {
+    /**
+     * @var string
+     */
     public string $city;
+
+    /**
+     * @var string
+     */
     public string $address;
+
+    /**
+     * @var string
+     */
     public string $zip_code;
+
+    /**
+     * @var string
+     */
     public string $country_code;
+
+    /**
+     * @var string|array|null
+     */
     public string|array|null $phone_number;
 
     public function __construct(array $data)
@@ -21,6 +43,10 @@ class LocationDTO
         $this->phone_number = Sanitizer::phone($data['phone_number'] ?? '');
     }
 
+    /**
+     * Valid when there are no field errors
+     * @return bool
+     */
     public function isValid(): bool
     {
         return
@@ -31,6 +57,9 @@ class LocationDTO
             Validator::phone($this->phone_number);
     }
 
+    /**
+     * @return array
+     */
     public function asArray(): array
     {
         return [

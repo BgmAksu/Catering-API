@@ -2,6 +2,9 @@
 
 namespace App\Helper;
 
+/**
+ * Helper class for sanitization data from client
+ */
 class Sanitizer
 {
     /**
@@ -47,15 +50,5 @@ class Sanitizer
     public static function zipCode($input): string
     {
         return strtoupper(str_replace(' ', '', trim($input)));
-    }
-
-    /**
-     * Sanitize all elements in an array (recursively), using .string() for all
-     */
-    public static function sanitizeAll($arr)
-    {
-        return array_map(function($val) {
-            return is_array($val) ? self::sanitizeAll($val) : self::string($val);
-        }, $arr);
     }
 }

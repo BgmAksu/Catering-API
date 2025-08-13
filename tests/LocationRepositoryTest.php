@@ -7,12 +7,27 @@ use PDO;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\LocationRepository;
 
+/**
+ * Test scenarios for Location Repository
+ */
 class LocationRepositoryTest extends TestCase
 {
+    /**
+     * @var PDO
+     */
     protected $pdo;
+    /**
+     * @var LocationRepository
+     */
     protected $repo;
+    /**
+     * @var FacilityRepository
+     */
     protected $facRepo;
 
+    /**
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->pdo = new PDO('mysql:host=testdb;dbname=testdb;port=3306', 'testuser', 'testpass');
@@ -22,6 +37,9 @@ class LocationRepositoryTest extends TestCase
 
     }
 
+    /**
+     * @return void
+     */
     public function testCreateAndGetById()
     {
         // Create location
@@ -42,6 +60,9 @@ class LocationRepositoryTest extends TestCase
         $this->assertEquals('Test Address 123', $fetched['address']);
     }
 
+    /**
+     * @return void
+     */
     public function testUpdate()
     {
         // Insert location
@@ -66,6 +87,9 @@ class LocationRepositoryTest extends TestCase
         $this->assertEquals('Updated Address', $fetched['address']);
     }
 
+    /**
+     * @return void
+     */
     public function testDelete()
     {
         // Insert location
@@ -87,6 +111,9 @@ class LocationRepositoryTest extends TestCase
         $this->assertFalse($fetched);
     }
 
+    /**
+     * @return void
+     */
     public function testDeleteLocationInUseByFacilityThrowsException()
     {
         // Step 1: Create a location
@@ -108,6 +135,9 @@ class LocationRepositoryTest extends TestCase
         $this->assertEquals(0, $deleted, "Deleting a location in use should return 0.");
     }
 
+    /**
+     * @return void
+     */
     public function testGetPaginated()
     {
         // Insert multiple locations for pagination

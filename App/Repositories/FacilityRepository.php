@@ -2,8 +2,14 @@
 
 namespace App\Repositories;
 
+/**
+ * Facility related DB operations
+ */
 class FacilityRepository
 {
+    /**
+     * @var
+     */
     protected $pdo;
     public function __construct($pdo)
     {
@@ -102,6 +108,10 @@ class FacilityRepository
         return [$facilities, $nextCursor];
     }
 
+    /**
+     * @param $id
+     * @return array
+     */
     public function getById($id): array
     {
         $sql = "
@@ -146,28 +156,46 @@ class FacilityRepository
         return $facility ?: [];
     }
 
-    public function getLocationId($facilityId)
+    /**
+     * @param $facilityId
+     * @return mixed
+     */
+    public function getLocationId($facilityId): mixed
     {
         $stmt = $this->pdo->prepare("SELECT location_id FROM facilities WHERE id = ?");
         $stmt->execute([$facilityId]);
         return $stmt->fetchColumn();
     }
 
-    public function create($name, $locationId)
+    /**
+     * @param $name
+     * @param $locationId
+     * @return mixed
+     */
+    public function create($name, $locationId): mixed
     {
         $stmt = $this->pdo->prepare("INSERT INTO facilities (name, location_id) VALUES (?, ?)");
         $stmt->execute([$name, $locationId]);
         return $this->pdo->lastInsertId();
     }
 
-    public function update($id, $name)
+    /**
+     * @param $id
+     * @param $name
+     * @return mixed
+     */
+    public function update($id, $name): mixed
     {
         $stmt = $this->pdo->prepare("UPDATE facilities SET name=? WHERE id=?");
         $stmt->execute([$name, $id]);
         return $stmt->rowCount();
     }
 
-    public function delete($id)
+    /**
+     * @param $id
+     * @return mixed
+     */
+    public function delete($id): mixed
     {
         $stmt = $this->pdo->prepare("DELETE FROM facilities WHERE id=?");
         $stmt->execute([$id]);

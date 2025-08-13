@@ -15,7 +15,14 @@ use App\Repositories\EmployeeRepository;
 
 class EmployeeController extends Injectable
 {
+    /**
+     * @var
+     */
     protected $pdo;
+
+    /**
+     * @var EmployeeRepository
+     */
     protected EmployeeRepository $employeeRepo;
 
     public function __construct()

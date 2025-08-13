@@ -15,7 +15,14 @@ use App\Repositories\LocationRepository;
 
 class LocationController extends Injectable
 {
+    /**
+     * @var
+     */
     protected $pdo;
+
+    /**
+     * @var LocationRepository
+     */
     protected LocationRepository $locationRepo;
 
     public function __construct()

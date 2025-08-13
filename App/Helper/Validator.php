@@ -2,6 +2,9 @@
 
 namespace App\Helper;
 
+/**
+ * Helper class for validation data from client
+ */
 class Validator
 {
     /**

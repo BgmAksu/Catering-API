@@ -15,7 +15,14 @@ use App\Repositories\TagRepository;
 
 class TagController extends Injectable
 {
+    /**
+     * @var
+     */
     protected $pdo;
+
+    /**
+     * @var TagRepository
+     */
     protected TagRepository $tagRepo;
 
     public function __construct()

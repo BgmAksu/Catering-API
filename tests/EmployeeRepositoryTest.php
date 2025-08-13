@@ -8,14 +8,35 @@ use PDO;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\EmployeeRepository;
 
+/**
+ * Test scenarios for Employee Repository
+ */
 class EmployeeRepositoryTest extends TestCase
 {
+    /**
+     * @var PDO
+     */
     protected $pdo;
+    /**
+     * @var EmployeeRepository
+     */
     protected $repo;
+    /**
+     * @var LocationRepository
+     */
     protected $locRepo;
+    /**
+     * @var FacilityRepository
+     */
     protected $facRepo;
+    /**
+     * @var mixed
+     */
     protected $facilityId; // Make sure this facility exists in test DB
 
+    /**
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->pdo = new PDO('mysql:host=testdb;dbname=testdb;port=3306', 'testuser', 'testpass');
@@ -35,6 +56,9 @@ class EmployeeRepositoryTest extends TestCase
         $this->facilityId = $this->facRepo->create('Test Employee Facility', $locId);
     }
 
+    /**
+     * @return void
+     */
     public function testGetPaginatedByFacility()
     {
         // Create multiple employees for pagination
@@ -63,6 +87,9 @@ class EmployeeRepositoryTest extends TestCase
         $this->assertTrue(in_array((int)$id1, $ids) || in_array((int)$id2, $ids));
     }
 
+    /**
+     * @return void
+     */
     public function testCreateAndGetById()
     {
         // Create a new employee
@@ -85,6 +112,9 @@ class EmployeeRepositoryTest extends TestCase
         $this->assertEquals($this->facilityId, $fetched['facility_id']);
     }
 
+    /**
+     * @return void
+     */
     public function testGetByFacility()
     {
         // Add two employees to facility
@@ -111,6 +141,9 @@ class EmployeeRepositoryTest extends TestCase
         $this->assertContains((int)$id2, $ids);
     }
 
+    /**
+     * @return void
+     */
     public function testUpdate()
     {
         // Create employee
@@ -135,7 +168,9 @@ class EmployeeRepositoryTest extends TestCase
     }
 
 
-
+    /**
+     * @return void
+     */
     public function testDelete()
     {
         // Create employee

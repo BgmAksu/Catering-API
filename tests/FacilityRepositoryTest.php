@@ -7,12 +7,27 @@ use PHPUnit\Framework\TestCase;
 use App\Repositories\FacilityRepository;
 use App\Repositories\LocationRepository;
 
+/**
+ * Test scenarios for Facility Repository
+ */
 class FacilityRepositoryTest extends TestCase
 {
+    /**
+     * @var PDO
+     */
     protected $pdo;
+    /**
+     * @var FacilityRepository
+     */
     protected $repo;
+    /**
+     * @var LocationRepository
+     */
     protected $locRepo;
 
+    /**
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->pdo = new PDO('mysql:host=testdb;dbname=testdb;port=3306', 'testuser', 'testpass');
@@ -21,6 +36,9 @@ class FacilityRepositoryTest extends TestCase
         $this->locRepo = new LocationRepository($this->pdo);
     }
 
+    /**
+     * @return void
+     */
     public function testCreateAndGetById()
     {
         // Create a new location for facility
@@ -45,6 +63,9 @@ class FacilityRepositoryTest extends TestCase
         $this->assertEquals($location['city'], $facility['location']['city']);
     }
 
+    /**
+     * @return void
+     */
     public function testUpdate()
     {
         // Create location and facility
@@ -70,6 +91,9 @@ class FacilityRepositoryTest extends TestCase
         $this->assertEquals($newName, $facility['name']);
     }
 
+    /**
+     * @return void
+     */
     public function testDelete()
     {
         // Create location and facility
@@ -97,6 +121,9 @@ class FacilityRepositoryTest extends TestCase
         $this->assertEmpty($facility);
     }
 
+    /**
+     * @return void
+     */
     public function testGetPaginated()
     {
         // Insert two locations for new facilities
@@ -137,6 +164,9 @@ class FacilityRepositoryTest extends TestCase
         $this->assertEquals(max($id1, $id2), $maxId);
     }
 
+    /**
+     * @return void
+     */
     public function testGetLocationId()
     {
         // Create location and facility

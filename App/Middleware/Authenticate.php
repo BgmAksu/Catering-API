@@ -4,8 +4,15 @@ namespace App\Middleware;
 use App\Plugins\Http\Response\Unauthorized;
 use JetBrains\PhpStorm\NoReturn;
 
+/**
+ * Authentication class
+ */
 class Authenticate
 {
+    /**
+     * Check authentication
+     * @return void
+     */
     public static function check(): void
     {
         $config = include __DIR__ . '/../../config/config.php';
@@ -27,6 +34,10 @@ class Authenticate
         }
     }
 
+    /**
+     * If authentication check is failed, return unauthorized message
+     * @return void
+     */
     #[NoReturn] private static function unauthorized(): void
     {
         (new Unauthorized(['error' => 'Unauthorized']))->send();

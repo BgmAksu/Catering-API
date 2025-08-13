@@ -9,13 +9,35 @@ use PDOException;
 use PHPUnit\Framework\TestCase;
 use App\Repositories\TagRepository;
 
+/**
+ * Test scenarios for Tag Repository
+ */
 class TagRepositoryTest extends TestCase
 {
+    /**
+     * @var PDO
+     */
     protected $pdo;
+    /**
+     * @var TagRepository
+     */
     protected $repo;
+    /**
+     * @var LocationRepository
+     */
     protected $locRepo;
+    /**
+     * @var FacilityRepository
+     */
     protected $facRepo;
+    /**
+     * @var mixed
+     */
     protected $facilityId; // Make sure this facility exists in test DB
+
+    /**
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->pdo = new PDO('mysql:host=testdb;dbname=testdb;port=3306', 'testuser', 'testpass');
@@ -35,6 +57,9 @@ class TagRepositoryTest extends TestCase
         $this->facilityId = $this->facRepo->create('Test Tag Facility', $locId);
     }
 
+    /**
+     * @return void
+     */
     public function testCreateTagIfNotExistsSuccessfully()
     {
         // Create a new tag
@@ -53,6 +78,9 @@ class TagRepositoryTest extends TestCase
         $this->assertEquals($id1, $foundId);
     }
 
+    /**
+     * @return void
+     */
     public function testUpdateTagIfNameUniqueReturnsSuccessfully()
     {
         // Create tag
@@ -71,6 +99,9 @@ class TagRepositoryTest extends TestCase
         $this->assertEquals($id, $foundId);
     }
 
+    /**
+     * @return void
+     */
     public function testUpdateTagNameDuplicateFails()
     {
         // Create tags
@@ -91,6 +122,9 @@ class TagRepositoryTest extends TestCase
         $this->assertEquals($id2, $this->repo->findIdByName($name2));
     }
 
+    /**
+     * @return void
+     */
     public function testDelete()
     {
         // Create tag
@@ -106,6 +140,9 @@ class TagRepositoryTest extends TestCase
         $this->assertFalse($fetched);
     }
 
+    /**
+     * @return void
+     */
     public function testDeleteTagInUseByFacilityThrowsException()
     {
         // Step 1: Create a tag
@@ -133,6 +170,9 @@ class TagRepositoryTest extends TestCase
     }
 
 
+    /**
+     * @return void
+     */
     public function testAddAndRemoveTagToFacility()
     {
         // Create tag
@@ -169,6 +209,9 @@ class TagRepositoryTest extends TestCase
         $this->assertEquals(0, $rowsRemovedAgain, "Removing nonexistent tag from facility.");
     }
 
+    /**
+     * @return void
+     */
     public function testGetPaginatedReturnsCorrectTags()
     {
         // Insert 3 tags to test pagination (names are unique)
