@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\Facility;
+
 /**
  * Facility related DB operations
  */
@@ -40,30 +42,42 @@ class FacilityRepository
             $where[] = "l.city LIKE :city";
             $params[':city'] = '%' . $filters['city'] . '%';
         }
+
         // When tag filter is provided, only facilities having at least one matching tag are returned.
+        // Tag filter via EXISTS (do NOT filter the LEFT JOIN used for tags_csv)
+        $existsTagSql = '';
         if (!empty($filters['tag'])) {
-            $where[] = "t.name LIKE :tag";
+            $existsTagSql = " AND EXISTS (
+            SELECT 1
+            FROM facility_tags ftf
+            JOIN tags tf ON tf.id = ftf.tag_id
+            WHERE ftf.facility_id = f.id
+              AND tf.name LIKE :tag
+        )";
             $params[':tag'] = '%' . $filters['tag'] . '%';
         }
 
-        $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+        $whereSql = 'WHERE ' . implode(' AND ', $where) . $existsTagSql;
 
         $sql = "
-            SELECT
-                f.id AS facility_id,
-                f.name AS facility_name,
-                f.creation_date,
-                l.city, l.address, l.zip_code, l.country_code, l.phone_number,
-                GROUP_CONCAT(DISTINCT t.name ORDER BY t.name SEPARATOR ',') AS tags_csv
-            FROM facilities f
-            JOIN locations l ON f.location_id = l.id
-            LEFT JOIN facility_tags ft ON ft.facility_id = f.id
-            LEFT JOIN tags t ON t.id = ft.tag_id
-            $whereSql
-            GROUP BY f.id
-            ORDER BY f.id ASC
-            LIMIT :limit_plus_one
-        ";
+        SELECT
+            f.id AS facility_id,
+            f.name AS facility_name,
+            f.creation_date,
+            l.city, l.address, l.zip_code, l.country_code, l.phone_number,
+            GROUP_CONCAT(DISTINCT t.name ORDER BY t.name SEPARATOR ',') AS tags_csv
+        FROM facilities f
+        JOIN locations l ON l.id = f.location_id
+
+        -- LEFT JOIN used to collect ALL tags of each facility
+        LEFT JOIN facility_tags ft ON ft.facility_id = f.id
+        LEFT JOIN tags t ON t.id = ft.tag_id
+
+        $whereSql
+        GROUP BY f.id
+        ORDER BY f.id ASC
+        LIMIT :limit_plus_one
+    ";
 
         $stmt = $this->pdo->prepare($sql);
         foreach ($params as $k => $v) {
@@ -107,6 +121,24 @@ class FacilityRepository
         }
 
         return [$facilities, $nextCursor];
+    }
+
+    /**
+     * Typed variant of getPaginated() that returns Facility models.
+     *
+     * @param int   $limit
+     * @param int   $cursor
+     * @param array $filters
+     * @return array{0: Facility[], 1: int|null} [facilities, nextCursor]
+     */
+    public function getPaginatedModels(int $limit, int $cursor = 0, array $filters = []): array
+    {
+        [$rows, $next] = $this->getPaginated($limit, $cursor, $filters);
+        $models = [];
+        foreach ($rows as $row) {
+            $models[] = Facility::fromArray($row);
+        }
+        return [$models, $next];
     }
 
     /**
@@ -155,6 +187,21 @@ class FacilityRepository
             }
         }
         return $facility ?: [];
+    }
+
+    /**
+     * Typed variant of single fetch that returns a Facility model or null.
+     *
+     * @param int $id
+     * @return Facility|null
+     */
+    public function getByIdModel(int $id): ?Facility
+    {
+        $arr = $this->getById($id);
+        if (!$arr) {
+            return null;
+        }
+        return Facility::fromArray($arr);
     }
 
     /**

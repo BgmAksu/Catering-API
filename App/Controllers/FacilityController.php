@@ -69,9 +69,14 @@ class FacilityController extends Injectable
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        list($facilities, $nextCursor) = $this->facilityRepo->getPaginated($limit, $cursor);
-        foreach ($facilities as $fid => &$fac) {
-            $fac['employees'] = $this->employeeRepo->getByFacility($fac['id']);
+        [$models, $nextCursor] = $this->facilityRepo->getPaginatedModels($limit, $cursor);
+
+        // Attach employees using the model's id, then convert back to response arrays
+        $facilities = [];
+        foreach ($models as $m) {
+            $arr = $m->toArray();
+            $arr['employees'] = $this->employeeRepo->getByFacility($m->id);
+            $facilities[] = $arr;
         }
 
         (new Ok([
@@ -79,7 +84,7 @@ class FacilityController extends Injectable
             // Echo back the original token (opaque) if provided; keep "0" otherwise
             'cursor' => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
             'next_cursor' => Cursor::encodeOrNull($nextCursor),
-            'facilities' => array_values($facilities)
+            'facilities' => $facilities,
         ]))->send();
     }
 
@@ -99,9 +104,13 @@ class FacilityController extends Injectable
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        list($facilities, $nextCursor) = $this->facilityRepo->getPaginated($limit, $cursor, $filters);
-        foreach ($facilities as $fid => &$fac) {
-            $fac['employees'] = $this->employeeRepo->getByFacility($fac['id']);
+        [$models, $nextCursor] = $this->facilityRepo->getPaginatedModels($limit, $cursor, $filters);
+
+        $facilities = [];
+        foreach ($models as $m) {
+            $arr = $m->toArray();
+            $arr['employees'] = $this->employeeRepo->getByFacility($m->id);
+            $facilities[] = $arr;
         }
 
         (new Ok([
@@ -109,7 +118,7 @@ class FacilityController extends Injectable
             // Echo back the original token (opaque) if provided; keep "0" otherwise
             'cursor' => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
             'next_cursor' => Cursor::encodeOrNull($nextCursor),
-            'facilities' => array_values($facilities)
+            'facilities' => $facilities,
         ]))->send();
     }
 
