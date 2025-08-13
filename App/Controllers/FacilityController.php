@@ -76,7 +76,8 @@ class FacilityController extends Injectable
 
         (new Ok([
             'limit' => $limit,
-            'cursor' => $cursor,
+            // Echo back the original token (opaque) if provided; keep "0" otherwise
+            'cursor' => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
             'next_cursor' => Cursor::encodeOrNull($nextCursor),
             'facilities' => array_values($facilities)
         ]))->send();
@@ -105,7 +106,8 @@ class FacilityController extends Injectable
 
         (new Ok([
             'limit' => $limit,
-            'cursor' => $cursor,
+            // Echo back the original token (opaque) if provided; keep "0" otherwise
+            'cursor' => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
             'next_cursor' => Cursor::encodeOrNull($nextCursor),
             'facilities' => array_values($facilities)
         ]))->send();
@@ -312,13 +314,24 @@ class FacilityController extends Injectable
 
         foreach ($tags as $tagName) {
             $tagDTO = new TagDTO($tagName);
-            if ($tagDTO->isValid()) {
-                $tagId = $this->tagRepo->createIfNotExists($tagDTO->name);
-                // If no, then add
-                if (!$this->tagRepo->facilityHasTag($facilityId, $tagId)) {
-                    $this->tagRepo->addTagToFacility($facilityId, $tagId);
-                    $added[] = $tagDTO->name;
-                }
+            if (!$tagDTO->isValid()) {
+                continue; // skip invalid/empty tag name
+            }
+
+            // Create or resolve existing id
+            $tagId = $this->tagRepo->createIfNotExists($tagDTO->name);
+            if (!$tagId) {
+                $tagId = $this->tagRepo->findIdByName($tagDTO->name);
+            }
+            if (!$tagId) {
+                // Could not resolve a valid tag id; skip safely
+                continue;
+            }
+
+            // Attach only if not already attached
+            if (!$this->tagRepo->facilityHasTag($facilityId, (int)$tagId)) {
+                $this->tagRepo->addTagToFacility($facilityId, (int)$tagId);
+                $added[] = $tagDTO->name;
             }
         }
 
