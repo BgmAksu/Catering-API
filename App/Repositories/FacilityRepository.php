@@ -9,90 +9,97 @@ class FacilityRepository
     {
         $this->pdo = $pdo;
     }
-    public function getPaginated($limit, $cursor, $filters = []): array
+    /**
+     * Cursor-based pagination for facilities with optional filters.
+     * Single query using GROUP BY + GROUP_CONCAT to avoid N+1.
+     *
+     * @param int   $limit  number of facilities to return (page size)
+     * @param int   $cursor return facilities with id > $cursor
+     * @param array $filters ['name'=>string|null, 'city'=>string|null, 'tag'=>string|null]
+     * @return array [array<int,array> $facilities, int|null $nextCursor]
+     */
+    public function getPaginated(int $limit, int $cursor, array $filters = []): array
     {
-        // Build WHERE clause for filters (name, tag, city)
-        $where = " WHERE f.id > :cursor";
+        $limitPlusOne = $limit + 1;
+
+        $where = ["f.id > :cursor"];
         $params = [':cursor' => $cursor];
 
         if (!empty($filters['name'])) {
-            $where .= " AND f.name LIKE :name";
+            $where[] = "f.name LIKE :name";
             $params[':name'] = '%' . $filters['name'] . '%';
         }
         if (!empty($filters['city'])) {
-            $where .= " AND l.city LIKE :city";
+            $where[] = "l.city LIKE :city";
             $params[':city'] = '%' . $filters['city'] . '%';
         }
-
-        // Get IDs
-        $idSql = "
-            SELECT f.id
-            FROM facilities f
-            JOIN locations l ON f.location_id = l.id
-            $where
-            ORDER BY f.id
-            LIMIT :limit
-        ";
-        $idStmt = $this->pdo->prepare($idSql);
-        foreach ($params as $key => $value) {
-            $idStmt->bindValue($key, $value);
-        }
-        $idStmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
-        $idStmt->execute();
-        $ids = $idStmt->fetchAll(\PDO::FETCH_COLUMN);
-
-        if (!$ids) {
-            return [[], [], $cursor];
+        // When tag filter is provided, only facilities having at least one matching tag are returned.
+        if (!empty($filters['tag'])) {
+            $where[] = "t.name LIKE :tag";
+            $params[':tag'] = '%' . $filters['tag'] . '%';
         }
 
-        // Fetch all details for those IDs
-        $in = str_repeat('?,', count($ids) - 1) . '?';
+        $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
         $sql = "
-            SELECT 
-                f.id as facility_id,
-                f.name as facility_name,
+            SELECT
+                f.id AS facility_id,
+                f.name AS facility_name,
                 f.creation_date,
                 l.city, l.address, l.zip_code, l.country_code, l.phone_number,
-                t.id as tag_id,
-                t.name as tag_name
+                GROUP_CONCAT(DISTINCT t.name ORDER BY t.name SEPARATOR ',') AS tags_csv
             FROM facilities f
             JOIN locations l ON f.location_id = l.id
-            LEFT JOIN facility_tags ft ON f.id = ft.facility_id
-            LEFT JOIN tags t ON ft.tag_id = t.id
-            WHERE f.id IN ($in)
-            ORDER BY f.id
+            LEFT JOIN facility_tags ft ON ft.facility_id = f.id
+            LEFT JOIN tags t ON t.id = ft.tag_id
+            $whereSql
+            GROUP BY f.id
+            ORDER BY f.id ASC
+            LIMIT :limit_plus_one
         ";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($ids);
-
-        $facilities = [];
-        $maxId = $cursor;
-        foreach ($stmt as $row) {
-            $fid = $row['facility_id'];
-            if (!isset($facilities[$fid])) {
-                $facilities[$fid] = [
-                    'id' => (int)$row['facility_id'],
-                    'name' => $row['facility_name'],
-                    'creation_date' => $row['creation_date'],
-                    'location' => [
-                        'city' => $row['city'],
-                        'address' => $row['address'],
-                        'zip_code' => $row['zip_code'],
-                        'country_code' => $row['country_code'],
-                        'phone_number' => $row['phone_number'],
-                    ],
-                    'tags' => []
-                ];
-                if ($row['facility_id'] > $maxId) {
-                    $maxId = $row['facility_id'];
-                }
-            }
-            if ($row['tag_id'] && $row['tag_name']) {
-                $facilities[$fid]['tags'][] = $row['tag_name'];
-            }
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
         }
-        return [$facilities, $maxId];
+        $stmt->bindValue(':limit_plus_one', $limitPlusOne, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Determine next cursor using limit+1 rule
+        $hasMore = count($rows) > $limit;
+        if ($hasMore) {
+            $nextCursor = (int)$rows[$limit]['facility_id']; // the first id of the next page
+            // Trim to requested page size
+            $rows = array_slice($rows, 0, $limit);
+        } else {
+            $nextCursor = null;
+        }
+
+        // Map rows to response structure
+        $facilities = [];
+        foreach ($rows as $row) {
+            $tags = [];
+            if (!empty($row['tags_csv'])) {
+                $tags = array_values(array_filter(array_map('trim', explode(',', $row['tags_csv']))));
+            }
+            $facilities[] = [
+                'id' => (int)$row['facility_id'],
+                'name' => $row['facility_name'],
+                'creation_date' => $row['creation_date'],
+                'location' => [
+                    'city' => $row['city'],
+                    'address' => $row['address'],
+                    'zip_code' => $row['zip_code'],
+                    'country_code' => $row['country_code'],
+                    'phone_number' => $row['phone_number'],
+                ],
+                'tags' => $tags,
+            ];
+        }
+
+        return [$facilities, $nextCursor];
     }
 
     public function getById($id): array

@@ -22,11 +22,27 @@ use Throwable;
 
 class FacilityController extends Injectable
 {
+    /**
+     * @var
+     */
     protected $pdo;
+    /**
+     * @var FacilityRepository
+     */
     protected FacilityRepository $facilityRepo;
+    /**
+     * @var EmployeeRepository
+     */
     protected EmployeeRepository $employeeRepo;
+    /**
+     * @var TagRepository
+     */
     protected TagRepository $tagRepo;
+    /**
+     * @var LocationRepository
+     */
     protected LocationRepository $locationRepo;
+
 
     public function __construct()
     {
@@ -48,11 +64,10 @@ class FacilityController extends Injectable
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        list($facilities, $maxId) = $this->facilityRepo->getPaginated($limit, $cursor);
+        list($facilities, $nextCursor) = $this->facilityRepo->getPaginated($limit, $cursor);
         foreach ($facilities as $fid => &$fac) {
             $fac['employees'] = $this->employeeRepo->getByFacility($fid);
         }
-        $nextCursor = count($facilities) ? $maxId : null;
 
         (new Ok([
             'limit' => $limit,
@@ -71,18 +86,17 @@ class FacilityController extends Injectable
     {
         $filters = [
             'name' => isset($_GET['name']) ? Sanitizer::string($_GET['name']) : null,
-            'tag' => isset($_GET['tag']) ? Sanitizer::string($_GET['tag']) : null,
+            'tag'  => isset($_GET['tag']) ? Sanitizer::string($_GET['tag'])   : null,
             'city' => isset($_GET['city']) ? Sanitizer::string($_GET['city']) : null,
         ];
 
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        list($facilities, $maxId) = $this->facilityRepo->getPaginated($limit, $cursor, $filters);
+        list($facilities, $nextCursor) = $this->facilityRepo->getPaginated($limit, $cursor, $filters);
         foreach ($facilities as $fid => &$fac) {
             $fac['employees'] = $this->employeeRepo->getByFacility($fid);
         }
-        $nextCursor = count($facilities) ? $maxId : null;
 
         (new Ok([
             'limit' => $limit,
