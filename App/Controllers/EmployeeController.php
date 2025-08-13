@@ -20,7 +20,7 @@ class EmployeeController extends Injectable
 
     public function __construct()
     {
-        Authenticate::check();Authenticate::check();
+        Authenticate::check();
         $this->pdo = $this->db->getConnection();
         $this->employeeRepo = new EmployeeRepository($this->pdo);
     }
