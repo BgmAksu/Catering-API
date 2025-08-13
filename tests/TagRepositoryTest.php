@@ -187,7 +187,6 @@ class TagRepositoryTest extends TestCase
 
         // Check test tags are included in results
         $ids = array_map('intval', array_column($result, 'id'));
-        printf("id1=%s, id2=%s, ids array: %s\n", $id1, $id2, print_r($ids, true));
         $this->assertContains((int)$id1, $ids);
         $this->assertContains((int)$id2, $ids);
     }
