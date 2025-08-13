@@ -78,7 +78,6 @@ class FacilityController extends Injectable
             'limit' => $limit,
             'cursor' => $cursor,
             'next_cursor' => Cursor::encodeOrNull($nextCursor),
-            'nc' => $nextCursor,
             'facilities' => array_values($facilities)
         ]))->send();
     }
@@ -108,7 +107,6 @@ class FacilityController extends Injectable
             'limit' => $limit,
             'cursor' => $cursor,
             'next_cursor' => Cursor::encodeOrNull($nextCursor),
-            'nc' => $nextCursor,
             'facilities' => array_values($facilities)
         ]))->send();
     }
