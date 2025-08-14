@@ -12,19 +12,63 @@ class TagDTO
     /**
      * @var string
      */
-    public string $name;
+    public string $name = '';
 
-    public function __construct($name)
+    /** Whether this DTO is used for update (partial) */
+    private bool $isUpdate = false;
+
+    /** Tracks which fields were provided */
+    private array $provided = [
+        'name' => false,
+    ];
+
+    public function __construct(array $data, bool $isUpdate = false)
     {
-        $this->name = Sanitizer::string($name);
+        $this->isUpdate = $isUpdate;
+        $this->provided['name'] = array_key_exists('name', $data);
+        $this->name = Sanitizer::string($data['name'] ?? '');
     }
 
-    /**
-     * Valid when there are no field errors
-     * @return bool
-     */
+    /** True when update payload contains no updatable fields */
+    public function isEmptyPayload(): bool
+    {
+        return !$this->provided['name'];
+    }
+
+    /** Field-level validation errors */
+    public function errors(): array
+    {
+        $errors = [];
+
+        if ($this->isUpdate) {
+            if ($this->isEmptyPayload()) {
+                $errors['payload'] = 'at_least_one_field_required';
+                return $errors;
+            }
+            if ($this->provided['name'] && !Validator::notEmpty($this->name)) {
+                $errors['name'] = 'cannot_be_empty';
+            }
+        } else {
+            if (!Validator::notEmpty($this->name)) {
+                $errors['name'] = 'required';
+            }
+        }
+
+        return $errors;
+    }
+
     public function isValid(): bool
     {
-        return Validator::notEmpty($this->name);
+        return empty($this->errors());
+    }
+
+    /** Patch array for UPDATE (only provided fields). */
+    public function toPatchArray(): array
+    {
+        $patch = [];
+        if ($this->provided['name']) {
+            $patch['name'] = $this->name;
+        }
+        return $patch;
     }
 }

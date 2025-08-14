@@ -3,9 +3,12 @@
 namespace App\Controllers;
 
 use App\DTO\TagDTO;
+use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Middleware\Authenticate;
+use App\Models\Tag;
 use App\Plugins\Di\Injectable;
+use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
 use App\Plugins\Http\Response\NoContent;
@@ -42,15 +45,14 @@ class TagController extends Injectable
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        $tags = $this->tagRepo->getPaginated($limit, $cursor);
-        $maxId = count($tags) ? end($tags)['id'] : $cursor;
-        $nextCursor = count($tags) ? $maxId : null;
+        [$models, $nextCursor] = $this->tagRepo->getPaginatedModels($limit, $cursor);
+        $tags = array_map(fn(Tag $t) => $t->toArray(), $models);
 
         (new Ok([
-            'limit' => $limit,
-            'cursor' => $cursor,
-            'next_cursor' => $nextCursor,
-            'tags' => $tags
+            'limit'       => $limit,
+            'cursor'      => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
+            'next_cursor' => Cursor::encodeOrNull($nextCursor),
+            'tags'        => $tags,
         ]))->send();
     }
 
@@ -63,11 +65,12 @@ class TagController extends Injectable
      */
     public function detail($id): void
     {
-        $tag = $this->tagRepo->getById((int)$id);
-        if (!$tag) {
+        $row = $this->tagRepo->getById((int)$id);
+        if (!$row) {
             throw new NotFound(['error' => 'Tag not found']);
         }
-        (new Ok($tag))->send();
+        $tag = Tag::fromArray($row);
+        (new Ok($tag->toArray()))->send();
     }
 
     /**
@@ -75,21 +78,27 @@ class TagController extends Injectable
      * POST /api/tags
      * Body: { "name": "Gluten Free" }
      * @return void
+     * @throws UnprocessableEntity
      * @throws BadRequest
      */
     public function create(): void
     {
         $data = Request::getJsonData();
-        $dto = new TagDTO($data);
+        $dto  = new TagDTO(is_array($data) ? $data : [], false); // create mode
 
         if (!$dto->isValid()) {
-            throw new BadRequest(['error' => 'Tag name is required']);
+            throw new UnprocessableEntity([
+                'message' => 'Validation failed',
+                'errors'  => $dto->errors(),
+            ]);
         }
+
 
         $created = $this->tagRepo->createIfNotExists($dto->name);
         if ($created === false) {
             throw new BadRequest(['error' => 'Tag name must be unique']);
         }
+
         (new Created(['id' => $created]))->send();
     }
 
@@ -101,23 +110,52 @@ class TagController extends Injectable
      * @return void
      * @throws BadRequest
      * @throws NotFound
+     * @throws UnprocessableEntity
      */
     public function update($id): void
     {
         $data = Request::getJsonData();
-        $dto = new TagDTO($data);
+        $dto  = new TagDTO(is_array($data) ? $data : [], true); // update mode (partial)
 
         if (!$dto->isValid()) {
-            throw new BadRequest(['error' => 'Tag name is required']);
+            throw new UnprocessableEntity([
+                'message' => 'Validation failed',
+                'errors'  => $dto->errors(),
+            ]);
         }
-        if (!$this->tagRepo->getById((int)$id)) {
+
+        $existing = $this->tagRepo->getById((int)$id);
+        if (!$existing) {
             throw new NotFound(['error' => 'Tag not found']);
         }
-        $updated = $this->tagRepo->updateIfNameUnique((int)$id, $dto->name);
-        if ($updated === false) {
-            throw new BadRequest(['error' => 'Tag name must be unique']);
+
+        $patch = $dto->toPatchArray();
+
+        if (isset($patch['name'])) {
+            $current = (string)$existing['name'];
+            $new     = (string)$patch['name'];
+
+            // Case-insensitive equality means "no-op" unless it's a case-only change
+            if (mb_strtolower($current) === mb_strtolower($new)) {
+                if ($current === $new) {
+                    // Exact same string -> no-op (idempotent PUT)
+                    (new Ok(['message' => 'No changes', 'updated' => false]))->send();
+                    return;
+                }
+                // Only case changed (e.g., 'vegan' -> 'Vegan'): allow update
+            }
+
+            $updated = $this->tagRepo->updateIfNameUnique((int)$id, $new);
+            if ($updated === false) {
+                throw new BadRequest(['error' => 'Tag name must be unique']);
+            }
+
+            (new Ok(['message' => 'Tag updated', 'updated' => true]))->send();
+            return;
         }
-        (new Ok(['message' => 'Tag updated']))->send();
+
+        // Nothing to update (empty patch)
+        (new Ok(['message' => 'No changes', 'updated' => false]))->send();
     }
 
     /**

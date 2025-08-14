@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\Tag;
+
 /**
  * Tag related DB operations
  */
@@ -17,18 +19,51 @@ class TagRepository
     }
 
     /**
-     * @param int $limit
-     * @param int $cursor
-     * @return mixed
+     * Cursor pagination (limit+1) with id >= cursor.
+     * Returns rows and numeric next cursor.
+     *
+     * @return array{0: array<int,array{id:int,name:string}>, 1: int|null}
      */
-    public function getPaginated(int $limit, int $cursor): mixed
+    public function getPaginated(int $limit, int $cursor = 0): mixed
     {
-        $sql = "SELECT id, name FROM tags WHERE id > ? ORDER BY id LIMIT ?";
+        $limitPlusOne = $limit + 1;
+
+        $sql = "SELECT id, name
+            FROM tags
+            WHERE id >= :cursor
+            ORDER BY id ASC
+            LIMIT :limit_plus_one";
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(1, $cursor, \PDO::PARAM_INT);
-        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':cursor', $cursor, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit_plus_one', $limitPlusOne, \PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $hasMore = count($rows) > $limit;
+        $nextCursor = null;
+        if ($hasMore) {
+            $nextCursor = (int)$rows[$limit]['id']; // first id of next page
+            $rows = array_slice($rows, 0, $limit);
+        }
+
+        return [$rows, $nextCursor];
+    }
+
+    /**
+     * Typed variant that returns Tag models with next cursor.
+     *
+     * @return array{0: Tag[], 1: int|null}
+     */
+    public function getPaginatedModels(int $limit, int $cursor = 0): array
+    {
+        [$rows, $next] = $this->getPaginated($limit, $cursor);
+        $models = [];
+        foreach ($rows as $r) {
+            $models[] = Tag::fromArray($r);
+        }
+        return [$models, $next];
     }
 
     /**
@@ -84,7 +119,7 @@ class TagRepository
      */
     public function updateIfNameUnique(int $id, string $name): mixed
     {
-        if ($this->existsByName($name)) {
+        if ($this->existsByName($name, $id)) {
             return false;
         }
         return $this->update($id, $name);
@@ -111,13 +146,32 @@ class TagRepository
     }
 
     /**
-     * @param string $name
+     * Check if a tag name already exists.
+     * Optionally exclude a given tag id (useful for updates).
+     *
+     * @param string   $name
+     * @param int|null $exceptId When provided, ignores this id (self)
      * @return bool
      */
-    public function existsByName(string $name): bool
+    public function existsByName(string $name, ?int $exceptId = null): bool
     {
-        $stmt = $this->pdo->prepare("SELECT 1 FROM tags WHERE name = ?");
-        $stmt->execute([$name]);
+        if ($exceptId !== null) {
+            $stmt = $this->pdo->prepare(
+                "SELECT 1
+                 FROM tags
+                 WHERE LOWER(name) = LOWER(?)
+                 AND id <> ?
+                 LIMIT 1"
+            );
+            $stmt->execute([$name, $exceptId]);
+        } else {
+            $stmt = $this->pdo->prepare(
+                "SELECT 1
+                 FROM tags
+                 WHERE LOWER(name) = LOWER(?)"
+            );
+            $stmt->execute([$name]);
+        }
         return (bool)$stmt->fetchColumn();
     }
 
@@ -127,7 +181,12 @@ class TagRepository
      */
     public function findIdByName(string $name): mixed
     {
-        $stmt = $this->pdo->prepare("SELECT id FROM tags WHERE name = ?");
+        $stmt = $this->pdo->prepareprepare(
+            "SELECT id
+             FROM tags
+             WHERE LOWER(name) = LOWER(?)
+             ORDER BY id"
+        );
         $stmt->execute([$name]);
         return $stmt->fetchColumn();
     }
