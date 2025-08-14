@@ -142,7 +142,6 @@ class TagController extends Injectable
                     (new Ok(['message' => 'No changes', 'updated' => false]))->send();
                     return;
                 }
-                // Only case changed (e.g., 'vegan' -> 'Vegan'): allow update
             }
 
             $updated = $this->tagRepo->updateIfNameUnique((int)$id, $new);

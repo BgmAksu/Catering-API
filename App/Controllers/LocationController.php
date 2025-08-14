@@ -3,9 +3,11 @@
 namespace App\Controllers;
 
 use App\DTO\LocationDTO;
+use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Middleware\Authenticate;
 use App\Plugins\Di\Injectable;
+use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
 use App\Plugins\Http\Response\NoContent;
@@ -42,14 +44,13 @@ class LocationController extends Injectable
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        $locations = $this->locationRepo->getPaginated($limit, $cursor);
-        $maxId = count($locations) ? end($locations)['id'] : $cursor;
-        $nextCursor = count($locations) ? $maxId : null;
+        [$models, $nextCursor] = $this->locationRepo->getPaginatedModelsWithNext($limit, $cursor);
+        $locations = array_map(fn(LocationModel $m) => $m->toArray(), $models);
 
         (new Ok([
             'limit' => $limit,
-            'cursor' => $cursor,
-            'next_cursor' => $nextCursor,
+            'cursor' => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
+            'next_cursor' => Cursor::encodeOrNull($nextCursor),
             'locations' => $locations
         ]))->send();
     }
@@ -63,11 +64,11 @@ class LocationController extends Injectable
      */
     public function detail($id): void
     {
-        $location = $this->locationRepo->getById((int)$id);
+        $location = $this->locationRepo->getByIdModel((int)$id);
         if (!$location) {
             throw new NotFound(['error' => 'Location not found']);
         }
-        (new Ok($location))->send();
+        (new Ok($location->toArray()))->send();
     }
 
     /**
@@ -75,15 +76,18 @@ class LocationController extends Injectable
      * POST /api/locations
      * Body: { "city": "...", "address": "...", "zip_code": "...", "country_code": "...", "phone_number": "..." }
      * @return void
-     * @throws BadRequest
+     * @throws UnprocessableEntity
      */
     public function create(): void
     {
         $data = Request::getJsonData();
-        $dto = new LocationDTO($data);
+        $dto  = new LocationDTO(is_array($data) ? $data : [], false);
 
         if (!$dto->isValid()) {
-            throw new BadRequest(['error' => 'Invalid input']);
+            throw new UnprocessableEntity([
+                'message' => 'Validation failed',
+                'errors'  => $dto->errors(),
+            ]);
         }
 
         $locationId = $this->locationRepo->create($dto->asArray());
@@ -96,21 +100,29 @@ class LocationController extends Injectable
      * Body: { "city": "...", "address": "...", "zip_code": "...", "country_code": "...", "phone_number": "..." }
      * @param $id
      * @return void
-     * @throws BadRequest
      * @throws NotFound
+     * @throws UnprocessableEntity
      */
     public function update($id): void
     {
         $data = Request::getJsonData();
-        $dto = new LocationDTO($data);
+        $dto  = new LocationDTO(is_array($data) ? $data : [], true);
 
         if (!$dto->isValid()) {
-            throw new BadRequest(['error' => 'Invalid input']);
+            throw new UnprocessableEntity([
+                'message' => 'Validation failed',
+                'errors'  => $dto->errors(),
+            ]);
         }
 
-        $updated = $this->locationRepo->update((int)$id, $dto->asArray());
-        if (!$updated) {
+        $existing = $this->locationRepo->getByIdModel((int)$id);
+        if (!$existing) {
             throw new NotFound(['error' => 'Location not found']);
+        }
+
+        $patch = $dto->toPatchArray();
+        if (!empty($patch)) {
+            $this->locationRepo->updatePartial((int)$id, $patch);
         }
 
         (new Ok(['message' => 'Location updated']))->send();
@@ -126,7 +138,7 @@ class LocationController extends Injectable
     public function delete($id): void
     {
         $deleted = $this->locationRepo->delete((int)$id);
-        if (!$deleted) {
+        if ($deleted <= 0) {
             throw new NotFound(['error' => 'Location not found or used by a facility']);
         }
         (new NoContent())->send();

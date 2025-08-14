@@ -34,13 +34,76 @@ class LocationDTO
      */
     public string|array|null $phone_number;
 
-    public function __construct(array $data)
+    /** Whether this DTO is used for update (partial) */
+    private bool $isUpdate = false;
+
+    /** Tracks which fields were provided */
+    private array $provided = [
+        'city'         => false,
+        'address'      => false,
+        'zip_code'     => false,
+        'country_code' => false,
+        'phone_number' => false,
+    ];
+
+    public function __construct(array $data, bool $isUpdate = false)
     {
-        $this->city = Sanitizer::string($data['city'] ?? '');
-        $this->address = Sanitizer::string($data['address'] ?? '');
-        $this->zip_code = Sanitizer::zipCode($data['zip_code'] ?? '');
-        $this->country_code = Sanitizer::countryCode($data['country_code'] ?? '');
-        $this->phone_number = Sanitizer::phone($data['phone_number'] ?? '');
+        $this->isUpdate = $isUpdate;
+
+        foreach (array_keys($this->provided) as $k) {
+            $this->provided[$k] = array_key_exists($k, $data);
+        }
+
+        $this->city          = Sanitizer::string($data['city'] ?? '');
+        $this->address       = Sanitizer::string($data['address'] ?? '');
+        $this->zip_code      = Sanitizer::string($data['zip_code'] ?? '');
+        $this->country_code  = Sanitizer::string($data['country_code'] ?? '');
+        $this->phone_number  = Sanitizer::string($data['phone_number'] ?? '');
+    }
+
+    /** True when update payload contains no updatable fields */
+    public function isEmptyPayload(): bool
+    {
+        foreach ($this->provided as $v) {
+            if ($v) return false;
+        }
+        return true;
+    }
+
+    /** Field-level validation errors */
+    public function errors(): array
+    {
+        $errors = [];
+
+        if ($this->isUpdate) {
+            if ($this->isEmptyPayload()) {
+                $errors['payload'] = 'at_least_one_field_required';
+                return $errors;
+            }
+            if ($this->provided['city'] && !Validator::notEmpty($this->city)) {
+                $errors['city'] = 'cannot_be_empty';
+            }
+            if ($this->provided['address'] && !Validator::notEmpty($this->address)) {
+                $errors['address'] = 'cannot_be_empty';
+            }
+            if ($this->provided['zip_code'] && !Validator::zipCode($this->zip_code)) {
+                $errors['zip_code'] = 'invalid';
+            }
+            if ($this->provided['country_code'] && !Validator::countryCode($this->country_code)) {
+                $errors['country_code'] = 'invalid';
+            }
+            if ($this->provided['phone_number'] && !Validator::phone($this->phone_number)) {
+                $errors['phone_number'] = 'invalid';
+            }
+        } else {
+            if (!Validator::notEmpty($this->city))         { $errors['city'] = 'required'; }
+            if (!Validator::notEmpty($this->address))      { $errors['address'] = 'required'; }
+            if (!Validator::zipCode($this->zip_code))      { $errors['zip_code'] = 'invalid'; }
+            if (!Validator::countryCode($this->country_code)) { $errors['country_code'] = 'invalid'; }
+            if (!Validator::phone($this->phone_number))    { $errors['phone_number'] = 'invalid'; }
+        }
+
+        return $errors;
     }
 
     /**
@@ -49,12 +112,7 @@ class LocationDTO
      */
     public function isValid(): bool
     {
-        return
-            Validator::notEmpty($this->city) &&
-            Validator::notEmpty($this->address) &&
-            Validator::zipCode($this->zip_code) &&
-            Validator::countryCode($this->country_code) &&
-            Validator::phone($this->phone_number);
+        return empty($this->errors());
     }
 
     /**
@@ -69,5 +127,17 @@ class LocationDTO
             'country_code' => $this->country_code,
             'phone_number' => $this->phone_number
         ];
+    }
+
+    /** Patch array for UPDATE (only provided fields) */
+    public function toPatchArray(): array
+    {
+        $patch = [];
+        foreach (array_keys($this->provided) as $k) {
+            if ($this->provided[$k]) {
+                $patch[$k] = $this->{$k};
+            }
+        }
+        return $patch;
     }
 }

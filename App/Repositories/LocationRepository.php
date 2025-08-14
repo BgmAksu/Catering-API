@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\Location;
+
 /**
  * Location Table related DB operations
  */
@@ -26,8 +28,11 @@ class LocationRepository
             "INSERT INTO locations (city, address, zip_code, country_code, phone_number) VALUES (?, ?, ?, ?, ?)"
         );
         $stmt->execute([
-            $location['city'], $location['address'], $location['zip_code'],
-            $location['country_code'], $location['phone_number']
+            $location['city'],
+            $location['address'],
+            $location['zip_code'],
+            $location['country_code'],
+            $location['phone_number'],
         ]);
         return $this->pdo->lastInsertId();
     }
@@ -84,9 +89,20 @@ class LocationRepository
      */
     public function getById(int $id): mixed
     {
-        $stmt = $this->pdo->prepare("SELECT id, city, address, zip_code, country_code, phone_number FROM locations WHERE id = ?");
+        $stmt = $this->pdo->prepare("SELECT * FROM locations WHERE id = ?");
         $stmt->execute([$id]);
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    /**
+     * @param int $id
+     * @return Location|null
+     */
+    public function getByIdModel(int $id): ?Location
+    {
+        $row = $this->getById($id);
+        return $row ? Location::fromArray($row) : null;
     }
 
     /**
@@ -96,12 +112,43 @@ class LocationRepository
      */
     public function getPaginated(int $limit, int $cursor): mixed
     {
-        $sql = "SELECT id, city, address, zip_code, country_code, phone_number FROM locations WHERE id > ? ORDER BY id LIMIT ?";
+        $limitPlusOne = $limit + 1;
+
+        $sql = "
+            SELECT *
+            FROM locations
+            WHERE id >= :cursor
+            ORDER BY id ASC
+            LIMIT :limit_plus_one
+        ";
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(1, $cursor, \PDO::PARAM_INT);
-        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':cursor', $cursor, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit_plus_one', $limitPlusOne, \PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $hasMore = count($rows) > $limit;
+        $nextCursor = null;
+        if ($hasMore) {
+            $nextCursor = (int)$rows[$limit]['id'];
+            $rows = array_slice($rows, 0, $limit);
+        }
+
+        return [$rows, $nextCursor];
+    }
+
+    /**
+     * @param int $limit
+     * @param int $cursor
+     * @return array
+     */
+    public function getPaginatedModels(int $limit, int $cursor = 0): array
+    {
+        [$rows, $next] = $this->getPaginated($limit, $cursor);
+        $models = array_map(fn($r) => Location::fromArray($r), $rows);
+        return [$models, $next];
     }
 
     /**
