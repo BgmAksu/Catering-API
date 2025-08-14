@@ -68,6 +68,7 @@ class LocationController extends Injectable
         if (!$location) {
             throw new NotFound(['error' => 'Location not found']);
         }
+
         (new Ok($location->toArray()))->send();
     }
 
@@ -81,8 +82,7 @@ class LocationController extends Injectable
     public function create(): void
     {
         $data = Request::getJsonData();
-        $dto  = new LocationDTO(is_array($data) ? $data : [], false);
-
+        $dto  = new LocationDTO(is_array($data) ? $data : [], false); // create mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
                 'message' => 'Validation failed',
@@ -91,6 +91,7 @@ class LocationController extends Injectable
         }
 
         $locationId = $this->locationRepo->create($dto->asArray());
+
         (new Created(['id' => $locationId]))->send();
     }
 
@@ -106,8 +107,7 @@ class LocationController extends Injectable
     public function update($id): void
     {
         $data = Request::getJsonData();
-        $dto  = new LocationDTO(is_array($data) ? $data : [], true);
-
+        $dto  = new LocationDTO(is_array($data) ? $data : [], true); // update mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
                 'message' => 'Validation failed',
@@ -141,6 +141,7 @@ class LocationController extends Injectable
         if ($deleted <= 0) {
             throw new NotFound(['error' => 'Location not found or used by a facility']);
         }
+
         (new NoContent())->send();
     }
 }

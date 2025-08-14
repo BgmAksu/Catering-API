@@ -8,6 +8,7 @@ use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Helper\Sanitizer;
 use App\Middleware\Authenticate;
+use App\Models\Facility;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
@@ -69,21 +70,10 @@ class FacilityController extends Injectable
         $cursor = Request::cursorDecider();
 
         [$models, $nextCursor] = $this->facilityRepo->getPaginatedModels($limit, $cursor);
-
-        // Attach employees using the model's id, then convert back to response arrays
-        $facilities = [];
-        foreach ($models as $m) {
-            $arr = $m->toArray();
-
-            $empModels = $this->employeeRepo->getByFacilityModels($m->id);
-            $arr['employees'] = array_map(fn($e) => $e->toArray(), $empModels);
-
-            $facilities[] = $arr;
-        }
+        $facilities = array_map([$this, 'facilityToResponse'], $models);
 
         (new Ok([
             'limit' => $limit,
-            // Echo back the original token (opaque) if provided; keep "0" otherwise
             'cursor' => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
             'next_cursor' => Cursor::encodeOrNull($nextCursor),
             'facilities' => $facilities,
@@ -107,20 +97,10 @@ class FacilityController extends Injectable
         $cursor = Request::cursorDecider();
 
         [$models, $nextCursor] = $this->facilityRepo->getPaginatedModels($limit, $cursor, $filters);
-
-        $facilities = [];
-        foreach ($models as $m) {
-            $arr = $m->toArray();
-
-            $empModels = $this->employeeRepo->getByFacilityModels($m->id);
-            $arr['employees'] = array_map(fn($e) => $e->toArray(), $empModels);
-
-            $facilities[] = $arr;
-        }
+        $facilities = array_map([$this, 'facilityToResponse'], $models);
 
         (new Ok([
             'limit' => $limit,
-            // Echo back the original token (opaque) if provided; keep "0" otherwise
             'cursor' => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
             'next_cursor' => Cursor::encodeOrNull($nextCursor),
             'facilities' => $facilities,
@@ -136,13 +116,14 @@ class FacilityController extends Injectable
      */
     public function detail($id): void
     {
-        $facility = $this->facilityRepo->getById((int)$id);
+        $facility = $this->facilityRepo->getByIdModel((int)$id);
         if (!$facility) {
             throw new NotFound(['error' => 'Facility not found']);
         }
-        $facility['employees'] = $this->employeeRepo->getByFacility((int)$id);
 
-        (new Ok($facility))->send();
+        $payload = $this->facilityToResponse($facility);
+
+        (new Ok($payload))->send();
     }
 
     /**
@@ -383,5 +364,14 @@ class FacilityController extends Injectable
         }
 
         (new Ok(['removed' => $removed]))->send();
+    }
+
+    private function facilityToResponse(Facility $m): array
+    {
+        $arr = $m->toArray();
+        $empModels = $this->employeeRepo->getByFacilityModels($m->id);
+        $arr['employees'] = array_map(fn($e) => $e->toArray(), $empModels);
+
+        return $arr;
     }
 }

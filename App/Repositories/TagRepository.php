@@ -78,6 +78,16 @@ class TagRepository
     }
 
     /**
+     * @param int $id
+     * @return Tag|null
+     */
+    public function getByIdModel(int $id): ?Tag
+    {
+        $row = $this->getById($id);
+        return $row ? Tag::fromArray($row) : null;
+    }
+
+    /**
      * @param string $name
      * @return mixed
      */

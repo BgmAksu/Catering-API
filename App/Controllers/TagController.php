@@ -65,11 +65,11 @@ class TagController extends Injectable
      */
     public function detail($id): void
     {
-        $row = $this->tagRepo->getById((int)$id);
-        if (!$row) {
+        $tag = $this->tagRepo->getByIdModel((int)$id);
+        if (!$tag) {
             throw new NotFound(['error' => 'Tag not found']);
         }
-        $tag = Tag::fromArray($row);
+
         (new Ok($tag->toArray()))->send();
     }
 
@@ -85,14 +85,12 @@ class TagController extends Injectable
     {
         $data = Request::getJsonData();
         $dto  = new TagDTO(is_array($data) ? $data : [], false); // create mode
-
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
                 'message' => 'Validation failed',
                 'errors'  => $dto->errors(),
             ]);
         }
-
 
         $created = $this->tagRepo->createIfNotExists($dto->name);
         if ($created === false) {
@@ -115,8 +113,7 @@ class TagController extends Injectable
     public function update($id): void
     {
         $data = Request::getJsonData();
-        $dto  = new TagDTO(is_array($data) ? $data : [], true); // update mode (partial)
-
+        $dto  = new TagDTO(is_array($data) ? $data : [], true); // update mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
                 'message' => 'Validation failed',
@@ -124,21 +121,19 @@ class TagController extends Injectable
             ]);
         }
 
-        $existing = $this->tagRepo->getById((int)$id);
+        $existing = $this->tagRepo->getByIdModel((int)$id);
         if (!$existing) {
             throw new NotFound(['error' => 'Tag not found']);
         }
 
         $patch = $dto->toPatchArray();
-
         if (isset($patch['name'])) {
-            $current = (string)$existing['name'];
+            $current = $existing->name;
             $new     = (string)$patch['name'];
 
             // Case-insensitive equality means "no-op" unless it's a case-only change
             if (mb_strtolower($current) === mb_strtolower($new)) {
                 if ($current === $new) {
-                    // Exact same string -> no-op (idempotent PUT)
                     (new Ok(['message' => 'No changes', 'updated' => false]))->send();
                     return;
                 }
@@ -170,6 +165,7 @@ class TagController extends Injectable
         if (!$deleted) {
             throw new NotFound(['error' => 'Tag not found or used by a facility']);
         }
+
         (new NoContent())->send();
     }
 }

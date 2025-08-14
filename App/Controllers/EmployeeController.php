@@ -69,6 +69,7 @@ class EmployeeController extends Injectable
         if (!$employee) {
             throw new NotFound(['error' => 'Employee not found']);
         }
+
         (new Ok($employee->toArray()))->send();
     }
 
@@ -84,7 +85,6 @@ class EmployeeController extends Injectable
     {
         $data = Request::getJsonData();
         $dto  = new EmployeeDTO(is_array($data) ? $data : [], false); // create mode
-
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
                 'message' => 'Validation failed',
@@ -93,6 +93,7 @@ class EmployeeController extends Injectable
         }
 
         $id = $this->employeeRepo->create((int)$facilityId, $dto->asArray());
+
         (new Created(['id' => $id]))->send();
     }
 
@@ -108,8 +109,7 @@ class EmployeeController extends Injectable
     public function update($employeeId): void
     {
         $data = Request::getJsonData();
-        $dto  = new EmployeeDTO(is_array($data) ? $data : [], true); // update mode (partial)
-
+        $dto  = new EmployeeDTO(is_array($data) ? $data : [], true); // update mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
                 'message' => 'Validation failed',
@@ -117,7 +117,6 @@ class EmployeeController extends Injectable
             ]);
         }
 
-        // Distinguish "not found" from "no fields changed"
         $existing = $this->employeeRepo->getByIdModel((int)$employeeId);
         if (!$existing) {
             throw new NotFound(['error' => 'Employee not found']);
@@ -144,6 +143,7 @@ class EmployeeController extends Injectable
         if (!$deleted) {
             throw new NotFound(['error' => 'Employee not found']);
         }
+
         (new NoContent())->send();
     }
 }
