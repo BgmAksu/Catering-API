@@ -6,6 +6,7 @@ use App\DTO\LocationDTO;
 use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Middleware\Authenticate;
+use App\Models\Location;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
@@ -44,8 +45,8 @@ class LocationController extends Injectable
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        [$models, $nextCursor] = $this->locationRepo->getPaginatedModelsWithNext($limit, $cursor);
-        $locations = array_map(fn(LocationModel $m) => $m->toArray(), $models);
+        [$models, $nextCursor] = $this->locationRepo->getPaginatedModels($limit, $cursor);
+        $locations = array_map(fn(Location $m) => $m->toArray(), $models);
 
         (new Ok([
             'limit' => $limit,
