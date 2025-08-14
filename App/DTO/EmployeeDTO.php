@@ -23,12 +23,12 @@ class EmployeeDTO
     /**
      * @var string
      */
-    public string $phone_number = '';
+    public string $phone = '';
 
     /**
      * @var string
      */
-    public string $title = '';
+    public string $position = '';
 
     /**
      * Whether this DTO is used for update (partial)
@@ -43,8 +43,8 @@ class EmployeeDTO
     private array $provided = [
         'name' => false,
         'email' => false,
-        'phone_number' => false,
-        'title' => false,
+        'phone' => false,
+        'position' => false,
     ];
 
     /**
@@ -57,17 +57,13 @@ class EmployeeDTO
 
         $this->provided['name']  = array_key_exists('name', $data);
         $this->provided['email'] = array_key_exists('email', $data);
+        $this->provided['phone'] = array_key_exists('phone', $data);
+        $this->provided['position'] = array_key_exists('position', $data);
 
-        $phoneProvided = array_key_exists('phone_number', $data) || array_key_exists('phone', $data);
-        $titleProvided = array_key_exists('title', $data) || array_key_exists('position', $data);
-
-        $this->provided['phone_number'] = $phoneProvided;
-        $this->provided['title']        = $titleProvided;
-
-        $this->name         = Sanitizer::string($data['name']  ?? '');
-        $this->email        = Sanitizer::string($data['email'] ?? '');
-        $this->phone_number = Sanitizer::string($data['phone_number'] ?? ($data['phone'] ?? ''));
-        $this->title        = Sanitizer::string($data['title'] ?? ($data['position'] ?? ''));
+        $this->name = Sanitizer::string($data['name']  ?? '');
+        $this->email = Sanitizer::string($data['email'] ?? '');
+        $this->phone = Sanitizer::string($data['phone'] ?? '');
+        $this->position = Sanitizer::string($data['position'] ?? '');
     }
 
     /**
@@ -78,8 +74,8 @@ class EmployeeDTO
     {
         return !$this->provided['name']
             && !$this->provided['email']
-            && !$this->provided['phone_number']
-            && !$this->provided['title'];
+            && !$this->provided['phone']
+            && !$this->provided['position'];
     }
 
     /**
@@ -112,11 +108,11 @@ class EmployeeDTO
             if ($this->provided['email'] && !Validator::email($this->email)) {
                 $errors['email'] = 'invalid';
             }
-            if ($this->provided['phone_number'] && !Validator::phone($this->phone_number)) {
-                $errors['phone_number'] = 'invalid';
+            if ($this->provided['phone'] && !Validator::phone($this->phone)) {
+                $errors['phone'] = 'invalid';
             }
-            if ($this->provided['title'] && !Validator::notEmpty($this->title)) {
-                $errors['title'] = 'cannot_be_empty';
+            if ($this->provided['position'] && !Validator::notEmpty($this->position)) {
+                $errors['position'] = 'cannot_be_empty';
             }
         } else {
             // CREATE: all required fields must be present & valid
@@ -126,11 +122,11 @@ class EmployeeDTO
             if (!Validator::email($this->email)) {
                 $errors['email'] = 'invalid';
             }
-            if (!Validator::phone($this->phone_number)) {
-                $errors['phone_number'] = 'invalid';
+            if (!Validator::phone($this->phone)) {
+                $errors['phone'] = 'invalid';
             }
-            if (!Validator::notEmpty($this->title)) {
-                $errors['title'] = 'required';
+            if (!Validator::notEmpty($this->position)) {
+                $errors['position'] = 'required';
             }
         }
 
@@ -146,8 +142,8 @@ class EmployeeDTO
         return [
             'name'         => $this->name,
             'email'        => $this->email,
-            'phone_number' => $this->phone_number,
-            'title'        => $this->title,
+            'phone'        => $this->phone,
+            'position'     => $this->position,
         ];
     }
 
@@ -158,7 +154,7 @@ class EmployeeDTO
     public function toPatchArray(): array
     {
         $patch = [];
-        foreach (['name','email','phone_number','title'] as $k) {
+        foreach (['name','email','phone','position'] as $k) {
             if ($this->provided[$k]) {
                 $patch[$k] = $this->{$k};
             }

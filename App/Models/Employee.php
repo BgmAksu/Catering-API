@@ -10,13 +10,30 @@ class Employee
     /** Raw row as returned by repository (preserved for response shape) */
     private array $raw = [];
 
+    /**
+     * @var int|null
+     */
     public ?int $id = null;
+    /**
+     * @var int|null
+     */
     public ?int $facility_id = null;
+    /**
+     * @var string|null
+     */
     public ?string $name = null;
+    /**
+     * @var string|null
+     */
     public ?string $email = null;
-    public ?string $phone_number = null;
-    public ?string $title = null;
-    public ?string $created_at = null;
+    /**
+     * @var string|null
+     */
+    public ?string $phone = null;
+    /**
+     * @var string|null
+     */
+    public ?string $position = null;
 
     /**
      * Build from the array shape returned by repositories/controllers.
@@ -30,35 +47,10 @@ class Employee
 
         $self->id = isset($data['id']) ? (int)$data['id'] : null;
         $self->facility_id = isset($data['facility_id']) ? (int)$data['facility_id'] : null;
-
-        if (isset($data['name'])) {
-            $self->name = (string)$data['name'];
-        } else {
-            $first = isset($data['first_name']) ? (string)$data['first_name'] : '';
-            $last  = isset($data['last_name']) ? (string)$data['last_name'] : '';
-            $full  = trim($first . ' ' . $last);
-            $self->name = $full !== '' ? $full : null;
-        }
-
+        $self->name = isset($data['name']) ? (string)$data['name'] : null;
         $self->email = isset($data['email']) ? (string)$data['email'] : null;
-
-        if (isset($data['phone_number'])) {
-            $self->phone_number = (string)$data['phone_number'];
-        } elseif (isset($data['phone'])) {
-            $self->phone_number = (string)$data['phone'];
-        }
-
-        if (isset($data['title'])) {
-            $self->title = (string)$data['title'];
-        } elseif (isset($data['position'])) {
-            $self->title = (string)$data['position'];
-        }
-
-        if (isset($data['created_at'])) {
-            $self->created_at = (string)$data['created_at'];
-        } elseif (isset($data['creation_date'])) {
-            $self->created_at = (string)$data['creation_date'];
-        }
+        $self->phone = isset($data['phone']) ? (string)$data['phone'] : null;
+        $self->position = isset($data['position']) ? (string)$data['position'] : null;
 
         return $self;
     }
@@ -73,15 +65,16 @@ class Employee
         if (!isset($this->raw['name']) && $this->name !== null) {
             $this->raw['name'] = $this->name;
         }
-        if (!isset($this->raw['phone_number']) && $this->phone_number !== null) {
-            $this->raw['phone_number'] = $this->phone_number;
+        if (!isset($this->raw['email']) && $this->email !== null) {
+            $this->raw['email'] = $this->email;
         }
-        if (!isset($this->raw['title']) && $this->title !== null) {
-            $this->raw['title'] = $this->title;
+        if (!isset($this->raw['phone']) && $this->phone !== null) {
+            $this->raw['phone'] = $this->phone;
         }
-        if (!isset($this->raw['created_at']) && $this->created_at !== null) {
-            $this->raw['created_at'] = $this->created_at;
+        if (!isset($this->raw['position']) && $this->position !== null) {
+            $this->raw['position'] = $this->position;
         }
+
         return $this->raw;
     }
 }
