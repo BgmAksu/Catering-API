@@ -213,7 +213,7 @@ class FacilityController extends Injectable
      * Only provided fields are validated and updated.
      * @param $id
      * @return void
-     * @throws BadRequest
+     * @throws UnprocessableEntity
      * @throws NotFound
      */
     public function update($id): void

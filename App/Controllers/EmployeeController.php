@@ -8,6 +8,7 @@ use App\Helper\Request;
 use App\Middleware\Authenticate;
 use App\Models\Employee;
 use App\Plugins\Di\Injectable;
+use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
 use App\Plugins\Http\Response\NoContent;
@@ -78,15 +79,18 @@ class EmployeeController extends Injectable
      * Body: { "name": "...", "email": "...", "phone": "...", "position": "..." }
      * @param $facilityId
      * @return void
-     * @throws BadRequest
+     * @throws UnprocessableEntity
      */
     public function create($facilityId): void
     {
         $data = Request::getJsonData();
-        $dto  = new EmployeeDTO(is_array($data) ? $data : []);
+        $dto  = new EmployeeDTO(is_array($data) ? $data : [], false); // create mode
 
         if (!$dto->isValid()) {
-            throw new BadRequest(['error' => 'Invalid input']);
+            throw new UnprocessableEntity([
+                'message' => 'Validation failed',
+                'errors'  => $dto->errors(),
+            ]);
         }
 
         $id = $this->employeeRepo->create((int)$facilityId, $dto->asArray());
@@ -99,21 +103,30 @@ class EmployeeController extends Injectable
      * Body: { "name": "...", "email": "...", "phone": "...", "position": "..." }
      * @param $employeeId
      * @return void
-     * @throws BadRequest
+     * @throws UnprocessableEntity
      * @throws NotFound
      */
     public function update($employeeId): void
     {
         $data = Request::getJsonData();
-        $dto  = new EmployeeDTO(is_array($data) ? $data : []);
+        $dto  = new EmployeeDTO(is_array($data) ? $data : [], true); // update mode (partial)
 
         if (!$dto->isValid()) {
-            throw new BadRequest(['error' => 'Invalid input']);
+            throw new UnprocessableEntity([
+                'message' => 'Validation failed',
+                'errors'  => $dto->errors(),
+            ]);
         }
 
-        $updated = $this->employeeRepo->update((int)$employeeId, $dto->asArray());
-        if (!$updated) {
+        // Distinguish "not found" from "no fields changed"
+        $existing = $this->employeeRepo->getByIdModel((int)$employeeId);
+        if (!$existing) {
             throw new NotFound(['error' => 'Employee not found']);
+        }
+
+        $patch = $dto->toPatchArray();
+        if (!empty($patch)) {
+            $this->employeeRepo->updatePartial((int)$employeeId, $patch);
         }
 
         (new Ok(['message' => 'Employee updated']))->send();

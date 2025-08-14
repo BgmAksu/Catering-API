@@ -163,6 +163,38 @@ class EmployeeRepository
     }
 
     /**
+     * Partially update an employee with only provided fields.
+     * @param int   $employeeId
+     * @param array $patch keys: name, email, phone_number, title
+     * @return int affected rows
+     */
+    public function updatePartial(int $employeeId, array $patch): int
+    {
+        if (empty($patch)) {
+            return 0;
+        }
+        $fields = [];
+        $values = [];
+
+        foreach (['name','email','phone_number','title'] as $k) {
+            if (array_key_exists($k, $patch)) {
+                $fields[] = "$k = ?";
+                $values[] = $patch[$k];
+            }
+        }
+
+        if (empty($fields)) {
+            return 0;
+        }
+
+        $values[] = $employeeId;
+        $sql = "UPDATE employees SET " . implode(', ', $fields) . " WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($values);
+        return $stmt->rowCount();
+    }
+
+    /**
      * @param $id
      * @return mixed
      */
