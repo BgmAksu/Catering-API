@@ -63,7 +63,7 @@ class TagController extends Injectable
      */
     public function detail($id): void
     {
-        $tag = $this->tagRepo->getById($id);
+        $tag = $this->tagRepo->getById((int)$id);
         if (!$tag) {
             throw new NotFound(['error' => 'Tag not found']);
         }
@@ -110,10 +110,10 @@ class TagController extends Injectable
         if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Tag name is required']);
         }
-        if (!$this->tagRepo->getById($id)) {
+        if (!$this->tagRepo->getById((int)$id)) {
             throw new NotFound(['error' => 'Tag not found']);
         }
-        $updated = $this->tagRepo->updateIfNameUnique($id, $dto->name);
+        $updated = $this->tagRepo->updateIfNameUnique((int)$id, $dto->name);
         if ($updated === false) {
             throw new BadRequest(['error' => 'Tag name must be unique']);
         }
@@ -129,7 +129,7 @@ class TagController extends Injectable
      */
     public function delete($id): void
     {
-        $deleted = $this->tagRepo->delete($id);
+        $deleted = $this->tagRepo->delete((int)$id);
         if (!$deleted) {
             throw new NotFound(['error' => 'Tag not found or used by a facility']);
         }

@@ -13,7 +13,6 @@ use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
 use App\Plugins\Http\Response\NoContent;
-use App\Plugins\Http\Exceptions\BadRequest;
 use App\Plugins\Http\Exceptions\NotFound;
 use App\Repositories\FacilityRepository;
 use App\Repositories\EmployeeRepository;
@@ -137,11 +136,11 @@ class FacilityController extends Injectable
      */
     public function detail($id): void
     {
-        $facility = $this->facilityRepo->getById($id);
+        $facility = $this->facilityRepo->getById((int)$id);
         if (!$facility) {
             throw new NotFound(['error' => 'Facility not found']);
         }
-        $facility['employees'] = $this->employeeRepo->getByFacility($id);
+        $facility['employees'] = $this->employeeRepo->getByFacility((int)$id);
 
         (new Ok($facility))->send();
     }
@@ -230,11 +229,11 @@ class FacilityController extends Injectable
         }
 
         // Ensure facility exists (and get current location id)
-        $facility = $this->facilityRepo->getById($id);
+        $facility = $this->facilityRepo->getById((int)$id);
         if (!$facility) {
             throw new NotFound(['error' => 'Facility not found']);
         }
-        $locationId = $this->facilityRepo->getLocationId($id);
+        $locationId = $this->facilityRepo->getLocationId((int)$id);
         if (!$locationId) {
             throw new NotFound(['error' => 'Location not found']);
         }
@@ -243,7 +242,7 @@ class FacilityController extends Injectable
         try {
             // Patch "name" if provided
             if ($dto->provided('name')) {
-                $this->facilityRepo->update($id, $dto->name);
+                $this->facilityRepo->update((int)$id, $dto->name);
             }
 
             // Patch "location" fields if provided
@@ -301,7 +300,7 @@ class FacilityController extends Injectable
      */
     public function delete($id): void
     {
-        $deleted = $this->facilityRepo->delete($id);
+        $deleted = $this->facilityRepo->delete((int)$id);
         if (!$deleted) {
             throw new NotFound(['error' => 'Facility not found']);
         }
@@ -318,7 +317,7 @@ class FacilityController extends Injectable
      */
     public function addTags($facilityId): void
     {
-        $facility = $this->facilityRepo->getById($facilityId);
+        $facility = $this->facilityRepo->getById((int)$facilityId);
         if (!$facility) {
             throw new NotFound(['error' => 'Facility not found']);
         }
@@ -344,8 +343,8 @@ class FacilityController extends Injectable
             }
 
             // Attach only if not already attached
-            if (!$this->tagRepo->facilityHasTag($facilityId, (int)$tagId)) {
-                $this->tagRepo->addTagToFacility($facilityId, (int)$tagId);
+            if (!$this->tagRepo->facilityHasTag((int)$facilityId, (int)$tagId)) {
+                $this->tagRepo->addTagToFacility((int)$facilityId, (int)$tagId);
                 $added[] = $tagDTO->name;
             }
         }
@@ -363,7 +362,7 @@ class FacilityController extends Injectable
      */
     public function removeTags($facilityId): void
     {
-        $facility = $this->facilityRepo->getById($facilityId);
+        $facility = $this->facilityRepo->getById((int)$facilityId);
         if (!$facility) {
             throw new NotFound(['error' => 'Facility not found']);
         }
@@ -376,8 +375,8 @@ class FacilityController extends Injectable
             $tagDTO = new TagDTO($tagName);
             if ($tagDTO->isValid()) {
                 $tagId = $this->tagRepo->findIdByName($tagDTO->name);
-                if ($tagId && $this->tagRepo->facilityHasTag($facilityId, $tagId)) {
-                    $this->tagRepo->removeTagFromFacility($facilityId, $tagId);
+                if ($tagId && $this->tagRepo->facilityHasTag((int)$facilityId, (int)$tagId)) {
+                    $this->tagRepo->removeTagFromFacility((int)$facilityId, (int)$tagId);
                     $removed[] = $tagDTO->name;
                 }
             }

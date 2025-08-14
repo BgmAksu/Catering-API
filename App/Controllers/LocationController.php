@@ -63,7 +63,7 @@ class LocationController extends Injectable
      */
     public function detail($id): void
     {
-        $location = $this->locationRepo->getById($id);
+        $location = $this->locationRepo->getById((int)$id);
         if (!$location) {
             throw new NotFound(['error' => 'Location not found']);
         }
@@ -108,7 +108,7 @@ class LocationController extends Injectable
             throw new BadRequest(['error' => 'Invalid input']);
         }
 
-        $updated = $this->locationRepo->update($id, $dto->asArray());
+        $updated = $this->locationRepo->update((int)$id, $dto->asArray());
         if (!$updated) {
             throw new NotFound(['error' => 'Location not found']);
         }
@@ -125,7 +125,7 @@ class LocationController extends Injectable
      */
     public function delete($id): void
     {
-        $deleted = $this->locationRepo->delete($id);
+        $deleted = $this->locationRepo->delete((int)$id);
         if (!$deleted) {
             throw new NotFound(['error' => 'Location not found or used by a facility']);
         }
