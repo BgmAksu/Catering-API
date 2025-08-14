@@ -9,6 +9,8 @@ class Validator
 {
     /**
      * Validate if string is not empty
+     * @param $input
+     * @return bool
      */
     public static function notEmpty($input): bool
     {
@@ -17,6 +19,8 @@ class Validator
 
     /**
      * Validate email address
+     * @param $input
+     * @return bool
      */
     public static function email($input): bool
     {
@@ -26,6 +30,8 @@ class Validator
     /**
      * Validate phone number: basic, at least 8 digits
      * Can be made for only NL number structure
+     * @param $input
+     * @return false|int
      */
     public static function phone($input): false|int
     {
@@ -35,6 +41,8 @@ class Validator
     /**
      * Validate country code: 2 uppercase letters
      * Can be made for only 'NL'
+     * @param $input
+     * @return false|int
      */
     public static function countryCode($input): false|int
     {
@@ -44,6 +52,8 @@ class Validator
     /**
      * Validate zip code: non-empty
      * Can be made for only NL city codes
+     * @param $input
+     * @return bool
      */
     public static function zipCode($input): bool
     {

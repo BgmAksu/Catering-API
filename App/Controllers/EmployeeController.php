@@ -12,7 +12,6 @@ use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
 use App\Plugins\Http\Response\NoContent;
-use App\Plugins\Http\Exceptions\BadRequest;
 use App\Plugins\Http\Exceptions\NotFound;
 use App\Repositories\EmployeeRepository;
 

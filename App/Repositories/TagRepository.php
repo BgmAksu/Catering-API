@@ -17,11 +17,11 @@ class TagRepository
     }
 
     /**
-     * @param $limit
-     * @param $cursor
+     * @param int $limit
+     * @param int $cursor
      * @return mixed
      */
-    public function getPaginated($limit, $cursor): mixed
+    public function getPaginated(int $limit, int $cursor): mixed
     {
         $sql = "SELECT id, name FROM tags WHERE id > ? ORDER BY id LIMIT ?";
         $stmt = $this->pdo->prepare($sql);
@@ -32,10 +32,10 @@ class TagRepository
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return mixed
      */
-    public function getById($id): mixed
+    public function getById(int $id): mixed
     {
         $stmt = $this->pdo->prepare("SELECT id, name FROM tags WHERE id = ?");
         $stmt->execute([$id]);
@@ -43,10 +43,10 @@ class TagRepository
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return mixed
      */
-    public function create($name): mixed
+    public function create(string $name): mixed
     {
         $stmt = $this->pdo->prepare("INSERT INTO tags (name) VALUES (?)");
         $stmt->execute([$name]);
@@ -54,10 +54,10 @@ class TagRepository
     }
 
     /**
-     * @param $tagName
+     * @param string $tagName
      * @return false|mixed
      */
-    public function createIfNotExists($tagName): mixed
+    public function createIfNotExists(string $tagName): mixed
     {
         if ($this->existsByName($tagName)) {
             return false;
@@ -66,11 +66,11 @@ class TagRepository
     }
 
     /**
-     * @param $id
-     * @param $name
+     * @param int $id
+     * @param string $name
      * @return mixed
      */
-    public function update($id, $name): mixed
+    public function update(int $id, string $name): mixed
     {
         $stmt = $this->pdo->prepare("UPDATE tags SET name = ? WHERE id = ?");
         $stmt->execute([$name, $id]);
@@ -78,11 +78,11 @@ class TagRepository
     }
 
     /**
-     * @param $id
-     * @param $name
+     * @param int $id
+     * @param string $name
      * @return false|mixed
      */
-    public function updateIfNameUnique($id, $name): mixed
+    public function updateIfNameUnique(int $id, string $name): mixed
     {
         if ($this->existsByName($name)) {
             return false;
@@ -91,10 +91,10 @@ class TagRepository
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return int
      */
-    public function delete($id): int
+    public function delete(int $id): int
     {
         // Check if tag is used by any facility
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM facility_tags WHERE tag_id=?");
@@ -111,10 +111,10 @@ class TagRepository
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return bool
      */
-    public function existsByName($name): bool
+    public function existsByName(string $name): bool
     {
         $stmt = $this->pdo->prepare("SELECT 1 FROM tags WHERE name = ?");
         $stmt->execute([$name]);
@@ -122,10 +122,10 @@ class TagRepository
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return mixed
      */
-    public function findIdByName($name): mixed
+    public function findIdByName(string $name): mixed
     {
         $stmt = $this->pdo->prepare("SELECT id FROM tags WHERE name = ?");
         $stmt->execute([$name]);
@@ -133,11 +133,11 @@ class TagRepository
     }
 
     /**
-     * @param $facilityId
-     * @param $tagId
+     * @param int $facilityId
+     * @param int $tagId
      * @return bool
      */
-    public function facilityHasTag($facilityId, $tagId): bool
+    public function facilityHasTag(int $facilityId, int $tagId): bool
     {
         $stmt = $this->pdo->prepare("SELECT 1 FROM facility_tags WHERE facility_id=? AND tag_id=?");
         $stmt->execute([$facilityId, $tagId]);
@@ -145,11 +145,11 @@ class TagRepository
     }
 
     /**
-     * @param $facilityId
-     * @param $tagId
+     * @param int $facilityId
+     * @param int $tagId
      * @return mixed
      */
-    public function addTagToFacility($facilityId, $tagId): mixed
+    public function addTagToFacility(int $facilityId, int $tagId): mixed
     {
         $stmt = $this->pdo->prepare("INSERT INTO facility_tags (facility_id, tag_id) VALUES (?, ?)");
         $stmt->execute([$facilityId, $tagId]);
@@ -158,11 +158,11 @@ class TagRepository
 
 
     /**
-     * @param $facilityId
-     * @param $tagId
+     * @param int $facilityId
+     * @param int $tagId
      * @return mixed
      */
-    public function removeTagFromFacility($facilityId, $tagId): mixed
+    public function removeTagFromFacility(int $facilityId, int $tagId): mixed
     {
         $stmt = $this->pdo->prepare("DELETE FROM facility_tags WHERE facility_id=? AND tag_id=?");
         $stmt->execute([$facilityId, $tagId]);

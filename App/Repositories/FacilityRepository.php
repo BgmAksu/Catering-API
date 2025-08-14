@@ -21,7 +21,6 @@ class FacilityRepository
     /**
      * Cursor-based pagination for facilities with optional filters.
      * Single query using GROUP BY + GROUP_CONCAT to avoid N+1.
-     *
      * @param int   $limit  number of facilities to return (page size)
      * @param int   $cursor return facilities with id > $cursor
      * @param array $filters ['name'=>string|null, 'city'=>string|null, 'tag'=>string|null]
@@ -125,7 +124,6 @@ class FacilityRepository
 
     /**
      * Typed variant of getPaginated() that returns Facility models.
-     *
      * @param int   $limit
      * @param int   $cursor
      * @param array $filters
@@ -142,10 +140,10 @@ class FacilityRepository
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return array
      */
-    public function getById($id): array
+    public function getById(int $id): array
     {
         $sql = "
             SELECT 
@@ -191,7 +189,6 @@ class FacilityRepository
 
     /**
      * Typed variant of single fetch that returns a Facility model or null.
-     *
      * @param int $id
      * @return Facility|null
      */
@@ -205,10 +202,10 @@ class FacilityRepository
     }
 
     /**
-     * @param $facilityId
+     * @param int $facilityId
      * @return mixed
      */
-    public function getLocationId($facilityId): mixed
+    public function getLocationId(int $facilityId): mixed
     {
         $stmt = $this->pdo->prepare("SELECT location_id FROM facilities WHERE id = ?");
         $stmt->execute([$facilityId]);
@@ -216,11 +213,11 @@ class FacilityRepository
     }
 
     /**
-     * @param $name
-     * @param $locationId
+     * @param string $name
+     * @param int $locationId
      * @return mixed
      */
-    public function create($name, $locationId): mixed
+    public function create(string $name, int $locationId): mixed
     {
         $stmt = $this->pdo->prepare("INSERT INTO facilities (name, location_id) VALUES (?, ?)");
         $stmt->execute([$name, $locationId]);
@@ -228,11 +225,11 @@ class FacilityRepository
     }
 
     /**
-     * @param $id
-     * @param $name
+     * @param int $id
+     * @param string $name
      * @return mixed
      */
-    public function update($id, $name): mixed
+    public function update(int $id, string $name): mixed
     {
         $stmt = $this->pdo->prepare("UPDATE facilities SET name=? WHERE id=?");
         $stmt->execute([$name, $id]);
@@ -240,10 +237,10 @@ class FacilityRepository
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return mixed
      */
-    public function delete($id): mixed
+    public function delete(int $id): mixed
     {
         $stmt = $this->pdo->prepare("DELETE FROM facilities WHERE id=?");
         $stmt->execute([$id]);

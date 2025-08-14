@@ -20,7 +20,7 @@ class LocationRepository
      * @param $location
      * @return mixed
      */
-    public function create($location): mixed
+    public function create(array $location): mixed
     {
         $stmt = $this->pdo->prepare(
             "INSERT INTO locations (city, address, zip_code, country_code, phone_number) VALUES (?, ?, ?, ?, ?)"
@@ -33,11 +33,11 @@ class LocationRepository
     }
 
     /**
-     * @param $locationId
-     * @param $location
+     * @param int $locationId
+     * @param array $location
      * @return mixed
      */
-    public function update($locationId, $location): mixed
+    public function update(int $locationId, array $location): mixed
     {
         $stmt = $this->pdo->prepare(
             "UPDATE locations SET city=?, address=?, zip_code=?, country_code=?, phone_number=? WHERE id=?"
@@ -51,7 +51,7 @@ class LocationRepository
 
     /**
      * Partially update a location with only provided fields.
-     * @param int   $locationId
+     * @param int $locationId
      * @param array $patch keys: city,address,zip_code,country_code,phone_number
      * @return int affected rows
      */
@@ -79,10 +79,10 @@ class LocationRepository
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return mixed
      */
-    public function getById($id): mixed
+    public function getById(int $id): mixed
     {
         $stmt = $this->pdo->prepare("SELECT id, city, address, zip_code, country_code, phone_number FROM locations WHERE id = ?");
         $stmt->execute([$id]);
@@ -90,11 +90,11 @@ class LocationRepository
     }
 
     /**
-     * @param $limit
-     * @param $cursor
+     * @param int $limit
+     * @param int $cursor
      * @return mixed
      */
-    public function getPaginated($limit, $cursor): mixed
+    public function getPaginated(int $limit, int $cursor): mixed
     {
         $sql = "SELECT id, city, address, zip_code, country_code, phone_number FROM locations WHERE id > ? ORDER BY id LIMIT ?";
         $stmt = $this->pdo->prepare($sql);
@@ -105,10 +105,10 @@ class LocationRepository
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return int
      */
-    public function delete($id): int
+    public function delete(int $id): int
     {
         // Check if location is used by any facility
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM facilities WHERE location_id = ?");

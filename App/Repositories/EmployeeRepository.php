@@ -20,12 +20,12 @@ class EmployeeRepository
 
     /**
      * Cursor-based pagination (limit+1) for employees of a facility.
-     * @param $facilityId
-     * @param $limit
+     * @param int $facilityId
+     * @param int $limit
      * @param int $cursor
      * @return array
      */
-    public function getPaginatedByFacility($facilityId, $limit, int $cursor = 0): array
+    public function getPaginatedByFacility(int $facilityId, int $limit, int $cursor = 0): array
     {
         $limitPlusOne = $limit + 1;
 
@@ -74,10 +74,10 @@ class EmployeeRepository
     }
 
     /**
-     * @param $facilityId
+     * @param int $facilityId
      * @return mixed
      */
-    public function getByFacility($facilityId): mixed
+    public function getByFacility(int $facilityId): mixed
     {
         $sql = "SELECT id, name, email, phone, position FROM employees WHERE facility_id = ?";
         $stmt = $this->pdo->prepare($sql);
@@ -103,10 +103,10 @@ class EmployeeRepository
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return mixed
      */
-    public function getById($id): mixed
+    public function getById(int $id): mixed
     {
         $stmt = $this->pdo->prepare("SELECT id, facility_id, name, email, phone, position FROM employees WHERE id = ?");
         $stmt->execute([$id]);
@@ -115,7 +115,6 @@ class EmployeeRepository
 
     /**
      * Typed fetch by employee id.
-     *
      * @param int $id
      * @return Employee|null
      */
@@ -130,11 +129,11 @@ class EmployeeRepository
     }
 
     /**
-     * @param $facilityId
-     * @param $emp
+     * @param int $facilityId
+     * @param array $emp
      * @return mixed
      */
-    public function create($facilityId, $emp): mixed
+    public function create(int $facilityId, array $emp): mixed
     {
         $stmt = $this->pdo->prepare(
             "INSERT INTO employees (facility_id, name, email, phone, position) VALUES (?, ?, ?, ?, ?)"
@@ -147,11 +146,11 @@ class EmployeeRepository
     }
 
     /**
-     * @param $id
-     * @param $emp
+     * @param int $id
+     * @param array $emp
      * @return mixed
      */
-    public function update($id, $emp): mixed
+    public function update(int $id, array $emp): mixed
     {
         $stmt = $this->pdo->prepare(
             "UPDATE employees SET name=?, email=?, phone=?, position=? WHERE id=?"
@@ -195,10 +194,10 @@ class EmployeeRepository
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return mixed
      */
-    public function delete($id): mixed
+    public function delete(int $id): mixed
     {
         $stmt = $this->pdo->prepare("DELETE FROM employees WHERE id=?");
         $stmt->execute([$id]);

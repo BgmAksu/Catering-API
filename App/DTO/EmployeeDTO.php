@@ -71,15 +71,6 @@ class EmployeeDTO
     }
 
     /**
-     * True if this DTO is used for update (partial)
-     * @return bool
-     */
-    public function isUpdate(): bool
-    {
-        return $this->isUpdate;
-    }
-
-    /**
      * True when update payload contains no updatable fields at all
      * @return bool
      */
@@ -173,15 +164,5 @@ class EmployeeDTO
             }
         }
         return $patch;
-    }
-
-    /**
-     * Helper to check if a field was sent in the payload
-     * @param string $field
-     * @return bool
-     */
-    public function provided(string $field): bool
-    {
-        return (bool)($this->provided[$field] ?? false);
     }
 }

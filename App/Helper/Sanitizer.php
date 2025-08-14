@@ -9,6 +9,8 @@ class Sanitizer
 {
     /**
      * Sanitize a string: remove HTML tags and trim whitespace
+     * @param $input
+     * @return string
      */
     public static function string($input): string
     {
@@ -17,6 +19,8 @@ class Sanitizer
 
     /**
      * Sanitize an email: lowercase, trim, validate format (returns empty string if invalid)
+     * @param $input
+     * @return string
      */
     public static function email($input): string
     {
@@ -27,6 +31,8 @@ class Sanitizer
     /**
      * Sanitize a phone number: remove all chars except digits and '+'
      * Can be made for only NL number structure
+     * @param $input
+     * @return array|string|null
      */
     public static function phone($input): array|string|null
     {
@@ -36,6 +42,8 @@ class Sanitizer
     /**
      * Sanitize a country code: 2 uppercase letters
      * Can be made for only 'NL'
+     * @param $input
+     * @return string
      */
     public static function countryCode($input): string
     {
@@ -46,6 +54,8 @@ class Sanitizer
     /**
      * Sanitize a zip code: remove spaces and uppercase
      * Can be made for only NL city codes
+     * @param $input
+     * @return string
      */
     public static function zipCode($input): string
     {

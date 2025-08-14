@@ -7,7 +7,11 @@ namespace App\Helper;
  */
 class Cursor
 {
-    /** Encode an integer cursor into a URL-safe opaque token. */
+    /**
+     * Encode an integer cursor into a URL-safe opaque token.
+     * @param int $cursor
+     * @return string
+     */
     public static function encode(int $cursor): string
     {
         $raw = (string)$cursor;
@@ -15,7 +19,11 @@ class Cursor
         return rtrim(strtr($b64, '+/', '-_'), '=');
     }
 
-    /** Try to decode a URL-safe token into an integer. Returns null on failure. */
+    /**
+     * Try to decode a URL-safe token into an integer. Returns null on failure.
+     * @param string $token
+     * @return int|null
+     */
     public static function decode(string $token): ?int
     {
         if ($token === '') {
@@ -42,7 +50,11 @@ class Cursor
         return (int)$decoded;
     }
 
-    /** Encode or return null when next cursor doesn't exist. */
+    /**
+     * Encode or return null when next cursor doesn't exist.
+     * @param int|null $cursor
+     * @return string|null
+     */
     public static function encodeOrNull(?int $cursor): ?string
     {
         return $cursor !== null ? self::encode($cursor) : null;
