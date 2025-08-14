@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\Employee;
+
 /**
  * Employee Table related DB operations
  */
@@ -17,20 +19,58 @@ class EmployeeRepository
     }
 
     /**
+     * Cursor-based pagination (limit+1) for employees of a facility.
      * @param $facilityId
      * @param $limit
-     * @param $cursor
-     * @return mixed
+     * @param int $cursor
+     * @return array
      */
-    public function getPaginatedByFacility($facilityId, $limit, $cursor): mixed
+    public function getPaginatedByFacility($facilityId, $limit, int $cursor = 0): array
     {
-        $sql = "SELECT id, name, email, phone, position FROM employees WHERE facility_id = ? AND id > ? ORDER BY id LIMIT ?";
+        $limitPlusOne = $limit + 1;
+
+        $sql = "
+        SELECT e.*
+        FROM employees e
+        WHERE e.facility_id = :fid
+          AND e.id >= :cursor
+        ORDER BY e.id ASC
+        LIMIT :limit_plus_one
+    ";
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(1, $facilityId, \PDO::PARAM_INT);
-        $stmt->bindValue(2, $cursor, \PDO::PARAM_INT);
-        $stmt->bindValue(3, $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':fid', $facilityId, \PDO::PARAM_INT);
+        $stmt->bindValue(':cursor', $cursor, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit_plus_one', $limitPlusOne, \PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $hasMore = count($rows) > $limit;
+        $nextCursor = null;
+        if ($hasMore) {
+            $nextCursor = (int)$rows[$limit]['id']; // first id of the next page
+            $rows = array_slice($rows, 0, $limit);
+        }
+
+        return [$rows, $nextCursor];
+    }
+
+    /**
+     * Typed variant that returns Employee models alongside next cursor.
+     * @param int $facilityId
+     * @param int $limit
+     * @param int $cursor
+     * @return array
+     */
+    public function getPaginatedByFacilityModels(int $facilityId, int $limit, int $cursor = 0): array
+    {
+        [$rows, $nextCursor] = $this->getPaginatedByFacility($facilityId, $limit, $cursor);
+        $models = [];
+        foreach ($rows as $row) {
+            $models[] = Employee::fromArray($row);
+        }
+        return [$models, $nextCursor];
     }
 
     /**
@@ -46,6 +86,23 @@ class EmployeeRepository
     }
 
     /**
+     * Typed variant for fetching employees by facility id.
+     * @param int $facilityId
+     * @return Employee[]
+     */
+    public function getByFacilityModels(int $facilityId): array
+    {
+        $rows = $this->getByFacility($facilityId); // reuse existing method
+        $models = [];
+        foreach ((array)$rows as $row) {
+            if (is_array($row)) {
+                $models[] = Employee::fromArray($row);
+            }
+        }
+        return $models;
+    }
+
+    /**
      * @param $id
      * @return mixed
      */
@@ -54,6 +111,22 @@ class EmployeeRepository
         $stmt = $this->pdo->prepare("SELECT id, facility_id, name, email, phone, position FROM employees WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Typed fetch by employee id.
+     *
+     * @param int $id
+     * @return Employee|null
+     */
+    public function getByIdModel(int $id): ?Employee
+    {
+        $row = $this->getById($id);
+
+        if (!$row) {
+            return null;
+        }
+        return Employee::fromArray($row);
     }
 
     /**

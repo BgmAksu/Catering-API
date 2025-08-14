@@ -75,7 +75,10 @@ class FacilityController extends Injectable
         $facilities = [];
         foreach ($models as $m) {
             $arr = $m->toArray();
-            $arr['employees'] = $this->employeeRepo->getByFacility($m->id);
+
+            $empModels = $this->employeeRepo->getByFacilityModels($m->id);
+            $arr['employees'] = array_map(fn($e) => $e->toArray(), $empModels);
+
             $facilities[] = $arr;
         }
 
@@ -109,7 +112,10 @@ class FacilityController extends Injectable
         $facilities = [];
         foreach ($models as $m) {
             $arr = $m->toArray();
-            $arr['employees'] = $this->employeeRepo->getByFacility($m->id);
+
+            $empModels = $this->employeeRepo->getByFacilityModels($m->id);
+            $arr['employees'] = array_map(fn($e) => $e->toArray(), $empModels);
+
             $facilities[] = $arr;
         }
 

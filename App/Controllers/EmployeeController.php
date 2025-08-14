@@ -3,8 +3,10 @@
 namespace App\Controllers;
 
 use App\DTO\EmployeeDTO;
+use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Middleware\Authenticate;
+use App\Models\Employee;
 use App\Plugins\Di\Injectable;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -43,14 +45,13 @@ class EmployeeController extends Injectable
         $limit = Request::limitDecider();
         $cursor = Request::cursorDecider();
 
-        $employees = $this->employeeRepo->getPaginatedByFacility($facilityId, $limit, $cursor);
-        $maxId = count($employees) ? end($employees)['id'] : $cursor;
-        $nextCursor = count($employees) ? $maxId : null;
+        [$models, $nextCursor] = $this->employeeRepo->getPaginatedByFacilityModels((int)$facilityId, $limit, $cursor);
+        $employees = array_map(fn(Employee $e) => $e->toArray(), $models);
 
         (new Ok([
             'limit' => $limit,
-            'cursor' => $cursor,
-            'next_cursor' => $nextCursor,
+            'cursor' => isset($_GET['cursor']) ? (string)$_GET['cursor'] : '0',
+            'next_cursor' => Cursor::encodeOrNull($nextCursor),
             'employees' => $employees
         ]))->send();
     }
@@ -64,11 +65,11 @@ class EmployeeController extends Injectable
      */
     public function detail($id): void
     {
-        $employee = $this->employeeRepo->getById($id);
+        $employee = $this->employeeRepo->getByIdModel((int)$id);
         if (!$employee) {
             throw new NotFound(['error' => 'Employee not found']);
         }
-        (new Ok($employee))->send();
+        (new Ok($employee->toArray()))->send();
     }
 
     /**
@@ -82,13 +83,13 @@ class EmployeeController extends Injectable
     public function create($facilityId): void
     {
         $data = Request::getJsonData();
-        $dto = new EmployeeDTO($data);
+        $dto  = new EmployeeDTO(is_array($data) ? $data : []);
 
         if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Invalid input']);
         }
 
-        $id = $this->employeeRepo->create($facilityId, $dto->asArray());
+        $id = $this->employeeRepo->create((int)$facilityId, $dto->asArray());
         (new Created(['id' => $id]))->send();
     }
 
@@ -104,13 +105,13 @@ class EmployeeController extends Injectable
     public function update($employeeId): void
     {
         $data = Request::getJsonData();
-        $dto = new EmployeeDTO($data);
+        $dto  = new EmployeeDTO(is_array($data) ? $data : []);
 
         if (!$dto->isValid()) {
             throw new BadRequest(['error' => 'Invalid input']);
         }
 
-        $updated = $this->employeeRepo->update($employeeId, $dto->asArray());
+        $updated = $this->employeeRepo->update((int)$employeeId, $dto->asArray());
         if (!$updated) {
             throw new NotFound(['error' => 'Employee not found']);
         }
@@ -127,7 +128,7 @@ class EmployeeController extends Injectable
      */
     public function delete($employeeId): void
     {
-        $deleted = $this->employeeRepo->delete($employeeId);
+        $deleted = $this->employeeRepo->delete((int)$employeeId);
         if (!$deleted) {
             throw new NotFound(['error' => 'Employee not found']);
         }

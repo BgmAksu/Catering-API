@@ -3,7 +3,7 @@
 namespace App\Models;
 
 /**
- * Simple Location model representing DB row
+ * Simple Location model
  */
 class Location
 {

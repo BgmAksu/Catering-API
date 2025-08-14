@@ -3,7 +3,7 @@
 namespace App\Models;
 
 /**
- * Simple Tag model representing DB row
+ * Simple Tag model
  */
 class Tag
 {

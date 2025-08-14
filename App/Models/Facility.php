@@ -3,7 +3,7 @@
 namespace App\Models;
 
 /**
- * Simple Facility model representing DB row
+ * Simple Facility model
  */
 class Facility
 {
@@ -59,7 +59,7 @@ class Facility
     }
 
     /**
-     * Convert back to API response shape (keeps the current contract).
+     * Convert back to API response shape.
      * @return array
      */
     public function toArray(): array
