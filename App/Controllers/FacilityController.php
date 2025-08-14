@@ -10,6 +10,7 @@ use App\Helper\Sanitizer;
 use App\Middleware\Authenticate;
 use App\Models\Facility;
 use App\Plugins\Di\Injectable;
+use App\Plugins\Http\Exceptions\InternalServerError;
 use App\Plugins\Http\Exceptions\UnprocessableEntity;
 use App\Plugins\Http\Response\Ok;
 use App\Plugins\Http\Response\Created;
@@ -131,7 +132,8 @@ class FacilityController extends Injectable
      * POST /api/facilities
      * Body: { "name": "...", "location": {...}, "tags": [...] }
      * @return void
-     * @throws UnprocessableEntity|Throwable
+     * @throws UnprocessableEntity
+     * @throws InternalServerError
      */
     public function create(): void
     {
@@ -182,7 +184,11 @@ class FacilityController extends Injectable
             (new Created(['id' => $facilityId]))->send();
         } catch (Throwable $e) {
             $this->pdo->rollBack();
-            throw $e;
+            // optional: log the real error for diagnostics
+            // error_log('[facility.create] '.$e->getMessage());
+            throw new InternalServerError([
+                'message' => 'Unexpected error during facility creation',
+            ]);
         }
     }
 
@@ -195,6 +201,7 @@ class FacilityController extends Injectable
      * @return void
      * @throws UnprocessableEntity
      * @throws NotFound
+     * @throws InternalServerError
      */
     public function update($id): void
     {
@@ -268,7 +275,11 @@ class FacilityController extends Injectable
             (new Ok(['message' => 'Facility updated']))->send();
         } catch (Throwable $e) {
             $this->pdo->rollBack();
-            throw $e;
+            // optional: log the real error for diagnostics
+            // error_log('[facility.create] '.$e->getMessage());
+            throw new InternalServerError([
+                'message' => 'Unexpected error during facility update',
+            ]);
         }
     }
 
