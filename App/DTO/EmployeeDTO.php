@@ -2,6 +2,7 @@
 
 namespace App\DTO;
 
+use App\Enums\ValidationError;
 use App\Helper\Sanitizer;
 use App\Helper\Validator;
 
@@ -98,35 +99,35 @@ class EmployeeDTO
         if ($this->isUpdate) {
             // Block completely empty update payload
             if ($this->isEmptyPayload()) {
-                $errors['payload'] = 'at_least_one_field_required';
+                $errors['payload'] = ValidationError::AT_LEAST_ONE_FIELD_REQUIRED->value;
                 return $errors;
             }
 
             if ($this->provided['name'] && !Validator::notEmpty($this->name)) {
-                $errors['name'] = 'cannot_be_empty';
+                $errors['name'] = ValidationError::CANNOT_BE_EMPTY->value;
             }
             if ($this->provided['email'] && !Validator::email($this->email)) {
-                $errors['email'] = 'invalid';
+                $errors['email'] = ValidationError::INVALID_EMAIL->value;
             }
             if ($this->provided['phone'] && !Validator::phone($this->phone)) {
-                $errors['phone'] = 'invalid';
+                $errors['phone'] = ValidationError::INVALID_PHONE->value;
             }
             if ($this->provided['position'] && !Validator::notEmpty($this->position)) {
-                $errors['position'] = 'cannot_be_empty';
+                $errors['position'] = ValidationError::CANNOT_BE_EMPTY->value;
             }
         } else {
             // CREATE: all required fields must be present & valid
             if (!Validator::notEmpty($this->name)) {
-                $errors['name'] = 'required';
+                $errors['name'] = ValidationError::REQUIRED->value;
             }
             if (!Validator::email($this->email)) {
-                $errors['email'] = 'invalid';
+                $errors['email'] = ValidationError::INVALID_EMAIL->value;
             }
             if (!Validator::phone($this->phone)) {
-                $errors['phone'] = 'invalid';
+                $errors['phone'] = ValidationError::INVALID_PHONE->value;
             }
             if (!Validator::notEmpty($this->position)) {
-                $errors['position'] = 'required';
+                $errors['position'] = ValidationError::REQUIRED->value;
             }
         }
 

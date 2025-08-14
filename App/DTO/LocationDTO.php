@@ -1,6 +1,7 @@
 <?php
 namespace App\DTO;
 
+use App\Enums\ValidationError;
 use App\Helper\Sanitizer;
 use App\Helper\Validator;
 
@@ -77,30 +78,40 @@ class LocationDTO
 
         if ($this->isUpdate) {
             if ($this->isEmptyPayload()) {
-                $errors['payload'] = 'at_least_one_field_required';
+                $errors['payload'] = ValidationError::AT_LEAST_ONE_FIELD_REQUIRED->value;
                 return $errors;
             }
             if ($this->provided['city'] && !Validator::notEmpty($this->city)) {
-                $errors['city'] = 'cannot_be_empty';
+                $errors['city'] = ValidationError::CANNOT_BE_EMPTY->value;
             }
             if ($this->provided['address'] && !Validator::notEmpty($this->address)) {
-                $errors['address'] = 'cannot_be_empty';
+                $errors['address'] = ValidationError::CANNOT_BE_EMPTY->value;
             }
             if ($this->provided['zip_code'] && !Validator::zipCode($this->zip_code)) {
-                $errors['zip_code'] = 'invalid';
+                $errors['zip_code'] = ValidationError::INVALID_ZIP_CODE->value;
             }
             if ($this->provided['country_code'] && !Validator::countryCode($this->country_code)) {
-                $errors['country_code'] = 'invalid';
+                $errors['country_code'] = ValidationError::INVALID_COUNTRY_CODE->value;
             }
             if ($this->provided['phone_number'] && !Validator::phone($this->phone_number)) {
-                $errors['phone_number'] = 'invalid';
+                $errors['phone_number'] = ValidationError::INVALID_PHONE->value;
             }
         } else {
-            if (!Validator::notEmpty($this->city))         { $errors['city'] = 'required'; }
-            if (!Validator::notEmpty($this->address))      { $errors['address'] = 'required'; }
-            if (!Validator::zipCode($this->zip_code))      { $errors['zip_code'] = 'invalid'; }
-            if (!Validator::countryCode($this->country_code)) { $errors['country_code'] = 'invalid'; }
-            if (!Validator::phone($this->phone_number))    { $errors['phone_number'] = 'invalid'; }
+            if (!Validator::notEmpty($this->city)) {
+                $errors['city'] = ValidationError::REQUIRED->value;
+            }
+            if (!Validator::notEmpty($this->address)) {
+                $errors['address'] = ValidationError::REQUIRED->value;
+            }
+            if (!Validator::zipCode($this->zip_code)) {
+                $errors['zip_code'] = ValidationError::INVALID_ZIP_CODE->value;
+            }
+            if (!Validator::countryCode($this->country_code)) {
+                $errors['country_code'] = ValidationError::INVALID_COUNTRY_CODE->value;
+            }
+            if (!Validator::phone($this->phone_number)) {
+                $errors['phone_number'] = ValidationError::INVALID_PHONE->value;
+            }
         }
 
         return $errors;

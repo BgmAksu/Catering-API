@@ -1,6 +1,7 @@
 <?php
 namespace App\DTO;
 
+use App\Enums\ValidationError;
 use App\Helper\Sanitizer;
 use App\Helper\Validator;
 
@@ -42,15 +43,15 @@ class TagDTO
 
         if ($this->isUpdate) {
             if ($this->isEmptyPayload()) {
-                $errors['payload'] = 'at_least_one_field_required';
+                $errors['payload'] = ValidationError::AT_LEAST_ONE_FIELD_REQUIRED->value;
                 return $errors;
             }
             if ($this->provided['name'] && !Validator::notEmpty($this->name)) {
-                $errors['name'] = 'cannot_be_empty';
+                $errors['name'] = ValidationError::CANNOT_BE_EMPTY->value;
             }
         } else {
             if (!Validator::notEmpty($this->name)) {
-                $errors['name'] = 'required';
+                $errors['name'] = ValidationError::REQUIRED->value;
             }
         }
 
