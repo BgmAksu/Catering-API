@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\DTO\TagDTO;
+use App\Enums\ResponseErrors;
+use App\Enums\ResponseMessages;
 use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Middleware\Authenticate;
@@ -67,7 +69,7 @@ class TagController extends Injectable
     {
         $tag = $this->tagRepo->getByIdModel((int)$id);
         if (!$tag) {
-            throw new NotFound(['error' => 'Tag not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_TAG_NOT_FOUND->value]);
         }
 
         (new Ok($tag->toArray()))->send();
@@ -87,14 +89,14 @@ class TagController extends Injectable
         $dto  = new TagDTO(is_array($data) ? $data : [], false); // create mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
-                'message' => 'Validation failed',
+                'message' => ResponseErrors::ERROR_VALIDATION_FAILED->value,
                 'errors'  => $dto->errors(),
             ]);
         }
 
         $created = $this->tagRepo->createIfNotExists($dto->name);
         if ($created === false) {
-            throw new BadRequest(['error' => 'Tag name must be unique']);
+            throw new BadRequest(['error' => ResponseErrors::ERROR_TAG_MUST_BE_UNIQUE->value]);
         }
 
         (new Created(['id' => $created]))->send();
@@ -116,14 +118,14 @@ class TagController extends Injectable
         $dto  = new TagDTO(is_array($data) ? $data : [], true); // update mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
-                'message' => 'Validation failed',
+                'message' => ResponseErrors::ERROR_VALIDATION_FAILED->value,
                 'errors'  => $dto->errors(),
             ]);
         }
 
         $existing = $this->tagRepo->getByIdModel((int)$id);
         if (!$existing) {
-            throw new NotFound(['error' => 'Tag not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_TAG_NOT_FOUND->value]);
         }
 
         $patch = $dto->toPatchArray();
@@ -134,22 +136,22 @@ class TagController extends Injectable
             // Case-insensitive equality means "no-op" unless it's a case-only change
             if (mb_strtolower($current) === mb_strtolower($new)) {
                 if ($current === $new) {
-                    (new Ok(['message' => 'No changes', 'updated' => false]))->send();
+                    (new Ok(['message' => ResponseMessages::NO_CHANGES->value, 'updated' => false]))->send();
                     return;
                 }
             }
 
             $updated = $this->tagRepo->updateIfNameUnique((int)$id, $new);
             if ($updated === false) {
-                throw new BadRequest(['error' => 'Tag name must be unique']);
+                throw new BadRequest(['error' => ResponseErrors::ERROR_TAG_MUST_BE_UNIQUE->value]);
             }
 
-            (new Ok(['message' => 'Tag updated', 'updated' => true]))->send();
+            (new Ok(['message' => ResponseMessages::SUCCESS_TAG_UPDATED->value, 'updated' => true]))->send();
             return;
         }
 
         // Nothing to update (empty patch)
-        (new Ok(['message' => 'No changes', 'updated' => false]))->send();
+        (new Ok(['message' => ResponseMessages::NO_CHANGES->value, 'updated' => false]))->send();
     }
 
     /**
@@ -163,7 +165,7 @@ class TagController extends Injectable
     {
         $deleted = $this->tagRepo->delete((int)$id);
         if (!$deleted) {
-            throw new NotFound(['error' => 'Tag not found or used by a facility']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_TAG_DELETE->value]);
         }
 
         (new NoContent())->send();

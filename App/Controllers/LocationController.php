@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\DTO\LocationDTO;
+use App\Enums\ResponseErrors;
+use App\Enums\ResponseMessages;
 use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Middleware\Authenticate;
@@ -66,7 +68,7 @@ class LocationController extends Injectable
     {
         $location = $this->locationRepo->getByIdModel((int)$id);
         if (!$location) {
-            throw new NotFound(['error' => 'Location not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_LOCATION_NOT_FOUND->value]);
         }
 
         (new Ok($location->toArray()))->send();
@@ -85,7 +87,7 @@ class LocationController extends Injectable
         $dto  = new LocationDTO(is_array($data) ? $data : [], false); // create mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
-                'message' => 'Validation failed',
+                'message' => ResponseErrors::ERROR_VALIDATION_FAILED->value,
                 'errors'  => $dto->errors(),
             ]);
         }
@@ -110,14 +112,14 @@ class LocationController extends Injectable
         $dto  = new LocationDTO(is_array($data) ? $data : [], true); // update mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
-                'message' => 'Validation failed',
+                'message' => ResponseErrors::ERROR_VALIDATION_FAILED->value,
                 'errors'  => $dto->errors(),
             ]);
         }
 
         $existing = $this->locationRepo->getByIdModel((int)$id);
         if (!$existing) {
-            throw new NotFound(['error' => 'Location not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_LOCATION_NOT_FOUND->value]);
         }
 
         $patch = $dto->toPatchArray();
@@ -125,7 +127,7 @@ class LocationController extends Injectable
             $this->locationRepo->updatePartial((int)$id, $patch);
         }
 
-        (new Ok(['message' => 'Location updated']))->send();
+        (new Ok(['message' => ResponseMessages::SUCCESS_LOCATION_UPDATED->value]))->send();
     }
 
     /**
@@ -139,7 +141,7 @@ class LocationController extends Injectable
     {
         $deleted = $this->locationRepo->delete((int)$id);
         if ($deleted <= 0) {
-            throw new NotFound(['error' => 'Location not found or used by a facility']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_LOCATION_DELETE->value ]);
         }
 
         (new NoContent())->send();

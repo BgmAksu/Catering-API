@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\DTO\FacilityDTO;
 use App\DTO\TagDTO;
+use App\Enums\ResponseErrors;
+use App\Enums\ResponseMessages;
 use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Helper\Sanitizer;
@@ -119,7 +121,7 @@ class FacilityController extends Injectable
     {
         $facility = $this->facilityRepo->getByIdModel((int)$id);
         if (!$facility) {
-            throw new NotFound(['error' => 'Facility not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_FACILITY_NOT_FOUND->value]);
         }
 
         $payload = $this->facilityToResponse($facility);
@@ -142,7 +144,7 @@ class FacilityController extends Injectable
 
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
-                'message' => 'Validation failed',
+                'message' => ResponseErrors::ERROR_VALIDATION_FAILED->value,
                 'errors'  => $dto->errors(),
             ]);
         }
@@ -187,7 +189,7 @@ class FacilityController extends Injectable
             // optional: log the real error for diagnostics
             // error_log('[facility.create] '.$e->getMessage());
             throw new InternalServerError([
-                'message' => 'Unexpected error during facility creation',
+                'message' => ResponseErrors::ERROR_CREATION_FAILED_FACILITY->value,
             ]);
         }
     }
@@ -211,7 +213,7 @@ class FacilityController extends Injectable
         if (!$dto->isValid()) {
             // Return field-level 422 instead of a generic 400
             throw new UnprocessableEntity([
-                'message' => 'Validation failed',
+                'message' => ResponseErrors::ERROR_VALIDATION_FAILED->value,
                 'errors'  => $dto->errors(),
             ]);
         }
@@ -219,11 +221,11 @@ class FacilityController extends Injectable
         // Ensure facility exists (and get current location id)
         $facility = $this->facilityRepo->getById((int)$id);
         if (!$facility) {
-            throw new NotFound(['error' => 'Facility not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_FACILITY_NOT_FOUND->value]);
         }
         $locationId = $this->facilityRepo->getLocationId((int)$id);
         if (!$locationId) {
-            throw new NotFound(['error' => 'Location not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_LOCATION_NOT_FOUND->value]);
         }
 
         $this->pdo->beginTransaction();
@@ -272,13 +274,13 @@ class FacilityController extends Injectable
             }
 
             $this->pdo->commit();
-            (new Ok(['message' => 'Facility updated']))->send();
+            (new Ok(['message' => ResponseMessages::SUCCESS_FACILITY_UPDATED->value]))->send();
         } catch (Throwable $e) {
             $this->pdo->rollBack();
             // optional: log the real error for diagnostics
             // error_log('[facility.create] '.$e->getMessage());
             throw new InternalServerError([
-                'message' => 'Unexpected error during facility update',
+                'message' => ResponseErrors::ERROR_CREATION_FAILED_FACILITY->value,
             ]);
         }
     }
@@ -294,7 +296,7 @@ class FacilityController extends Injectable
     {
         $deleted = $this->facilityRepo->delete((int)$id);
         if (!$deleted) {
-            throw new NotFound(['error' => 'Facility not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_FACILITY_NOT_FOUND->value]);
         }
         (new NoContent())->send();
     }
@@ -311,7 +313,7 @@ class FacilityController extends Injectable
     {
         $facility = $this->facilityRepo->getById((int)$facilityId);
         if (!$facility) {
-            throw new NotFound(['error' => 'Facility not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_FACILITY_NOT_FOUND->value]);
         }
 
         $data = Request::getJsonData();
@@ -356,7 +358,7 @@ class FacilityController extends Injectable
     {
         $facility = $this->facilityRepo->getById((int)$facilityId);
         if (!$facility) {
-            throw new NotFound(['error' => 'Facility not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_FACILITY_NOT_FOUND->value]);
         }
 
         $data = Request::getJsonData();

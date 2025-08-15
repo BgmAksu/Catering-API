@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\DTO\EmployeeDTO;
+use App\Enums\ResponseErrors;
+use App\Enums\ResponseMessages;
 use App\Helper\Cursor;
 use App\Helper\Request;
 use App\Middleware\Authenticate;
@@ -67,7 +69,7 @@ class EmployeeController extends Injectable
     {
         $employee = $this->employeeRepo->getByIdModel((int)$id);
         if (!$employee) {
-            throw new NotFound(['error' => 'Employee not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_EMPLOYEE_NOT_FOUND->value]);
         }
 
         (new Ok($employee->toArray()))->send();
@@ -87,7 +89,7 @@ class EmployeeController extends Injectable
         $dto  = new EmployeeDTO(is_array($data) ? $data : [], false); // create mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
-                'message' => 'Validation failed',
+                'message' => ResponseErrors::ERROR_VALIDATION_FAILED->name,
                 'errors'  => $dto->errors(),
             ]);
         }
@@ -112,14 +114,14 @@ class EmployeeController extends Injectable
         $dto  = new EmployeeDTO(is_array($data) ? $data : [], true); // update mode
         if (!$dto->isValid()) {
             throw new UnprocessableEntity([
-                'message' => 'Validation failed',
+                'message' => ResponseErrors::ERROR_VALIDATION_FAILED->name,
                 'errors'  => $dto->errors(),
             ]);
         }
 
         $existing = $this->employeeRepo->getByIdModel((int)$employeeId);
         if (!$existing) {
-            throw new NotFound(['error' => 'Employee not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_EMPLOYEE_NOT_FOUND->value]);
         }
 
         $patch = $dto->toPatchArray();
@@ -127,7 +129,7 @@ class EmployeeController extends Injectable
             $this->employeeRepo->updatePartial((int)$employeeId, $patch);
         }
 
-        (new Ok(['message' => 'Employee updated']))->send();
+        (new Ok(['message' => ResponseMessages::SUCCESS_EMPLOYEE_UPDATED->value]))->send();
     }
 
     /**
@@ -141,7 +143,7 @@ class EmployeeController extends Injectable
     {
         $deleted = $this->employeeRepo->delete((int)$employeeId);
         if (!$deleted) {
-            throw new NotFound(['error' => 'Employee not found']);
+            throw new NotFound(['error' => ResponseErrors::ERROR_EMPLOYEE_NOT_FOUND->value]);
         }
 
         (new NoContent())->send();
