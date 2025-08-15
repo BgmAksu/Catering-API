@@ -76,9 +76,9 @@ class LocationRepositoryTest extends TestCase
         $id = $this->repo->create($location);
 
         // Update location data
-        $location['city'] = 'Updated City';
-        $location['address'] = 'Updated Address';
-        $affected = $this->repo->update($id, $location);
+        $locationPartial['city'] = 'Updated City';
+        $locationPartial['address'] = 'Updated Address';
+        $affected = $this->repo->updatePartial($id, $locationPartial);
         $this->assertGreaterThanOrEqual(0, $affected);
 
         // Check updated values
@@ -108,7 +108,7 @@ class LocationRepositoryTest extends TestCase
 
         // Verify deletion
         $fetched = $this->repo->getById($id);
-        $this->assertFalse($fetched);
+        $this->assertNull($fetched);
     }
 
     /**
