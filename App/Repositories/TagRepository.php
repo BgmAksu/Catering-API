@@ -191,7 +191,7 @@ class TagRepository
      */
     public function findIdByName(string $name): mixed
     {
-        $stmt = $this->pdo->prepareprepare(
+        $stmt = $this->pdo->prepare(
             "SELECT id
              FROM tags
              WHERE LOWER(name) = LOWER(?)
