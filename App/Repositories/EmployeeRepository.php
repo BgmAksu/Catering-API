@@ -175,7 +175,7 @@ class EmployeeRepository
         $fields = [];
         $values = [];
 
-        foreach (['name','email','phone_number','title'] as $k) {
+        foreach (['name','email','phone','position'] as $k) {
             if (array_key_exists($k, $patch)) {
                 $fields[] = "$k = ?";
                 $values[] = $patch[$k];

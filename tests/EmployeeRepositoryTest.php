@@ -74,17 +74,34 @@ class EmployeeRepositoryTest extends TestCase
             'phone' => '+31050000002',
             'position' => 'Pag2'
         ];
+        $emp3 = [
+            'name' => 'PaginateEmp3',
+            'email' => 'pag3_' . uniqid() . '@test.com',
+            'phone' => '+31050000003',
+            'position' => 'Pag3'
+        ];
+
         $id1 = $this->repo->create($this->facilityId, $emp1);
         $id2 = $this->repo->create($this->facilityId, $emp2);
+        $id3 = $this->repo->create($this->facilityId, $emp3);
 
-        // Test: Get paginated employees (limit 2)
-        $result = $this->repo->getPaginatedByFacility($this->facilityId, 2, $id1 - 1);
-        $this->assertIsArray($result);
-        $this->assertGreaterThanOrEqual(1, count($result));
+        // Page 1
+        [$rows1, $next1] = $this->repo->getPaginatedByFacility($this->facilityId, 1, 0);
+        $this->assertCount(1, $rows1);
+        $this->assertSame((int)$id1, (int)$rows1[0]['id']);
+        $this->assertSame((int)$id2, (int)$next1);
 
-        // Check that id1 or id2 is in the first page
-        $ids = array_map('intval', array_column($result, 'id'));
-        $this->assertTrue(in_array((int)$id1, $ids) || in_array((int)$id2, $ids));
+        // Page 2
+        [$rows2, $next2] = $this->repo->getPaginatedByFacility($this->facilityId, 1, $next1);
+        $this->assertCount(1, $rows2);
+        $this->assertSame((int)$id2, (int)$rows2[0]['id']);
+        $this->assertSame((int)$id3, (int)$next2);
+
+        // Page 3
+        [$rows3, $next3] = $this->repo->getPaginatedByFacility($this->facilityId, 1, $next2);
+        $this->assertCount(1, $rows3);
+        $this->assertSame((int)$id3, (int)$rows3[0]['id']);
+        $this->assertNull($next3);
     }
 
     /**
@@ -156,13 +173,13 @@ class EmployeeRepositoryTest extends TestCase
         $id = $this->repo->create($this->facilityId, $emp);
 
         // Update employee
-        $emp['name'] = 'UpdatedName';
-        $emp['position'] = 'UpdatedPosition';
-        $affected = $this->repo->update($id, $emp);
+        $partialUpdate['name'] = 'UpdatedName';
+        $partialUpdate['position'] = 'UpdatedPosition';
+        $affected = $this->repo->updatePartial($id, $partialUpdate);
         $this->assertGreaterThanOrEqual(0, $affected);
 
         // Verify update
-        $fetched = $this->repo->getById($id);
+        $fetched = $this->repo->getById((int)$id);
         $this->assertEquals('UpdatedName', $fetched['name']);
         $this->assertEquals('UpdatedPosition', $fetched['position']);
     }
