@@ -214,23 +214,27 @@ class TagRepositoryTest extends TestCase
      */
     public function testGetPaginatedReturnsCorrectTags()
     {
+        $baseline = (int)$this->pdo->query("SELECT COALESCE(MAX(id), 0) FROM tags")->fetchColumn();
+
         // Insert 3 tags to test pagination (names are unique)
         $name1 = 'unitPaginateTag1_' . uniqid();
         $name2 = 'unitPaginateTag2_' . uniqid();
         $name3 = 'unitPaginateTag3_' . uniqid();
 
-        $id1 = $this->repo->createIfNotExists($name1);
-        $id2 = $this->repo->createIfNotExists($name2);
-        $id3 = $this->repo->createIfNotExists($name3);
+        $id1 = (int)$this->repo->createIfNotExists($name1);
+        $id2 = (int)$this->repo->createIfNotExists($name2);
+        $id3 = (int)$this->repo->createIfNotExists($name3);
 
         // Test: Get paginated tags (limit 2)
-        $result = $this->repo->getPaginated(2, $id1 - 1);
-        $this->assertIsArray($result);
-        $this->assertGreaterThanOrEqual(2, count($result));
+        [$rows, $nextCursor] = $this->repo->getPaginated(2, $baseline+1);
+
+        $this->assertIsArray($rows);
+        $this->assertGreaterThanOrEqual(2, count($rows));
 
         // Check test tags are included in results
-        $ids = array_map('intval', array_column($result, 'id'));
-        $this->assertContains((int)$id1, $ids);
-        $this->assertContains((int)$id2, $ids);
+        $ids = array_map('intval', array_column($rows, 'id'));
+        $this->assertContains($id1, $ids);
+        $this->assertContains($id2, $ids);
+        $this->assertSame($id3, (int)$nextCursor);
     }
 }
