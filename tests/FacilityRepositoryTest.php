@@ -151,17 +151,16 @@ class FacilityRepositoryTest extends TestCase
         $id2 = $this->repo->create($name2, $locId2);
 
         // Test: Get paginated facilities (limit 2)
-        list($facilities, $maxId) = $this->repo->getPaginated(2, $id1 - 1);
+        [$facilities, $nextCursor] = $this->repo->getPaginated(2, $id1 - 1);
 
         $this->assertIsArray($facilities);
         $facilityIds = array_map('intval', array_column($facilities, 'id'));
 
-        // Assert both test facilities are in the result
-        $this->assertContains((int)$id1, $facilityIds, "Facility id1 ($id1) should be in paginated results.");
-        $this->assertContains((int)$id2, $facilityIds, "Facility id2 ($id2) should be in paginated results.");
+        $this->assertContains((int)$id1, $facilityIds);
+        $this->assertContains((int)$id2, $facilityIds);
 
-        // Check returned maxId is as expected
-        $this->assertEquals(max($id1, $id2), $maxId);
+        // Expected: nextCursor = null
+        $this->assertNull($nextCursor);
     }
 
     /**
