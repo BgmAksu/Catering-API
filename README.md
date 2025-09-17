@@ -1,4 +1,4 @@
-# DTT Catering API
+# Catering API
 
 A modern, Docker-ready PHP RESTful API backend project.
 
