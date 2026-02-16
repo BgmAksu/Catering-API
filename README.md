@@ -4,6 +4,25 @@ A modern, Docker-ready PHP RESTful API backend project.
 
 ---
 
+## About this project
+
+This is a backend REST API built as a portfolio project to demonstrate real-world backend skills.
+
+The project simulates a catering management system where facilities, locations, employees and tags can be managed through API endpoints.
+
+It focuses on:
+
+- Clean architecture (DTO, Repository, Middleware)
+- RESTful API design
+- Authentication
+- Pagination, filtering and validation
+- Dockerized environment
+- Automated tests
+
+Built to showcase backend engineering fundamentals using PHP and Docker.
+
+---
+
 ## 🚀 Quick Start (with Docker)
 
 ### Requirements
